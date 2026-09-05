@@ -1,0 +1,39 @@
+CREATE TABLE recording (
+    id TEXT NOT NULL PRIMARY KEY,
+    displayName TEXT NOT NULL,
+    fileName TEXT NOT NULL,
+    createdAt INTEGER NOT NULL,
+    durationMs INTEGER NOT NULL,
+    sizeBytes INTEGER NOT NULL,
+    source TEXT NOT NULL,
+    mimeType TEXT NOT NULL,
+    sampleRate INTEGER NOT NULL
+);
+
+-- transcriptionState is derived from the most recent job row, if any,
+-- so the library list needs one query rather than a fetch per row.
+selectAllWithStatus:
+SELECT recording.*, IFNULL(
+    (SELECT status FROM job WHERE job.recordingId = recording.id ORDER BY startedAt DESC LIMIT 1),
+    'NONE'
+) AS transcriptionState
+FROM recording
+ORDER BY createdAt DESC;
+
+selectByIdWithStatus:
+SELECT recording.*, IFNULL(
+    (SELECT status FROM job WHERE job.recordingId = recording.id ORDER BY startedAt DESC LIMIT 1),
+    'NONE'
+) AS transcriptionState
+FROM recording
+WHERE recording.id = ?;
+
+insert:
+INSERT INTO recording(id, displayName, fileName, createdAt, durationMs, sizeBytes, source, mimeType, sampleRate)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+rename:
+UPDATE recording SET displayName = ? WHERE id = ?;
+
+deleteById:
+DELETE FROM recording WHERE id = ?;

@@ -1,0 +1,23 @@
+*.iml
+.gradle/
+.kotlin/
+build/
+out/
+local.properties
+
+.idea/*
+!.idea/copyright/
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+
+*.hprof
+*.log
+
+# Downloaded model weights are large and machine-specific, never commit them
+*.bin
+*.gguf
+
+# Native sources vendored during the whisper.cpp spike
+whisper/src/androidMain/cpp/whisper.cpp/

@@ -1,0 +1,22 @@
+CREATE TABLE model (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    variant TEXT NOT NULL,
+    fileName TEXT NOT NULL,
+    sizeBytes INTEGER NOT NULL,
+    sha256 TEXT NOT NULL,
+    downloadedAt INTEGER NOT NULL
+);
+
+selectAll:
+SELECT * FROM model ORDER BY downloadedAt DESC;
+
+selectById:
+SELECT * FROM model WHERE id = ?;
+
+insert:
+INSERT INTO model(id, name, variant, fileName, sizeBytes, sha256, downloadedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+deleteById:
+DELETE FROM model WHERE id = ?;
