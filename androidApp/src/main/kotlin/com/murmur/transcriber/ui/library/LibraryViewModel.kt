@@ -2,6 +2,7 @@ package com.murmur.transcriber.ui.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.murmur.transcriber.recording.DeleteRecordingUseCase
 import com.murmur.transcriber.shared.domain.model.Recording
 import com.murmur.transcriber.shared.domain.repository.RecordingRepository
 import com.murmur.transcriber.ui.components.ItemKind
@@ -42,6 +43,7 @@ sealed interface LibraryIntent {
 
 class LibraryViewModel(
     private val recordingRepository: RecordingRepository,
+    private val deleteRecordingUseCase: DeleteRecordingUseCase,
 ) : ViewModel() {
 
     private var allRecordings: List<Recording> = emptyList()
@@ -64,7 +66,7 @@ class LibraryViewModel(
                 recordingRepository.rename(intent.id, intent.newName)
             }
             is LibraryIntent.Delete -> viewModelScope.launch {
-                recordingRepository.delete(intent.id)
+                deleteRecordingUseCase(intent.id)
             }
         }
     }

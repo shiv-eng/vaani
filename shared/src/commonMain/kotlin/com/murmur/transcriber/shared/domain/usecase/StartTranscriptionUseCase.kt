@@ -6,6 +6,7 @@ import com.murmur.transcriber.shared.domain.pipeline.WindowPlanner
 import com.murmur.transcriber.shared.domain.repository.RecordingRepository
 import com.murmur.transcriber.shared.domain.repository.TranscriptionRepository
 import com.murmur.transcriber.whisper.TranscriptionEngine
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -23,6 +24,8 @@ class StartTranscriptionUseCase(
     private val transcriptionRepository: TranscriptionRepository,
     private val audioDecoder: AudioDecoder,
     private val transcriptionEngine: TranscriptionEngine,
+    /** :shared holds no Context, so the platform layer supplies the recordings-dir join. */
+    private val resolveAudioPath: (fileName: String) -> String,
     private val windowPlanner: WindowPlanner = WindowPlanner(),
 ) {
     /** Emits progress in [0f, 1f] as each window completes. */
@@ -41,7 +44,7 @@ class StartTranscriptionUseCase(
         check(transcriptionEngine.loadModel(modelPath)) { "Failed to load model $modelPath" }
         try {
             windows.forEachIndexed { done, window ->
-                val pcm = audioDecoder.decodeWindow(recording.fileName, window)
+                val pcm = audioDecoder.decodeWindow(resolveAudioPath(recording.fileName), window)
                 transcriptionEngine.transcribeWindow(pcm, sampleRate = 16_000, language = language)
                     .forEach { engineSegment ->
                         transcriptionRepository.appendSegment(
@@ -61,6 +64,9 @@ class StartTranscriptionUseCase(
                 emit((done + 1).toFloat() / windows.size)
             }
             transcriptionRepository.markComplete(job.id)
+        } catch (t: CancellationException) {
+            transcriptionRepository.cancel(job.id)
+            throw t
         } catch (t: Throwable) {
             transcriptionRepository.markFailed(job.id, t.message ?: "Unknown error")
             throw t

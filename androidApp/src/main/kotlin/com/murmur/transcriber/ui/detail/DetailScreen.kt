@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -52,7 +53,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,9 +60,14 @@ import androidx.compose.ui.zIndex
 import com.murmur.transcriber.shared.domain.model.Recording
 import com.murmur.transcriber.shared.domain.model.RecordingSource
 import com.murmur.transcriber.shared.domain.model.Segment
+import com.murmur.transcriber.shared.domain.model.TranscriptionJob
+import com.murmur.transcriber.shared.domain.model.TranscriptionState
 import com.murmur.transcriber.ui.components.DeleteRecordingDialog
+import com.murmur.transcriber.ui.components.EdgeCaseDialog
+import com.murmur.transcriber.ui.components.EdgeCaseTone
 import com.murmur.transcriber.ui.components.RecordingActionsSheetContent
 import com.murmur.transcriber.ui.components.RenameDialog
+import com.murmur.transcriber.ui.components.SpinnerRing
 import com.murmur.transcriber.ui.components.mrise
 import com.murmur.transcriber.ui.components.mslide
 import com.murmur.transcriber.ui.format.formatBytes
@@ -151,19 +156,50 @@ fun DetailScreen(
                 Spacer(Modifier.height(12.dp))
             }
 
-            if (state.segments.isEmpty()) {
-                item { EmptyTranscriptCard(modifier = Modifier.mrise()) }
-            } else {
-                itemsIndexed(state.segments, key = { _, s -> s.id }) { index, segment ->
-                    SegmentRow(
-                        segment = segment,
-                        active = index == state.activeSegmentIndex,
-                        onClick = { viewModel.seekTo(segment.startMs) },
-                        modifier = Modifier.mslide(index * 40),
-                    )
+            val job = state.transcriptionJob
+            when {
+                job != null && (job.status == TranscriptionState.QUEUED || job.status == TranscriptionState.RUNNING) -> {
+                    item { TranscribingCard(job = job, modifier = Modifier.mrise()) }
+                }
+                state.segments.isEmpty() -> {
+                    item {
+                        EmptyTranscriptCard(
+                            hasModel = state.models.isNotEmpty(),
+                            onTranscribeClick = viewModel::startTranscription,
+                            modifier = Modifier.mrise(),
+                        )
+                    }
+                }
+                else -> {
+                    itemsIndexed(state.segments, key = { _, s -> s.id }) { index, segment ->
+                        SegmentRow(
+                            segment = segment,
+                            active = index == state.activeSegmentIndex,
+                            onClick = { viewModel.seekTo(segment.startMs) },
+                            modifier = Modifier.mslide(index * 40),
+                        )
+                    }
                 }
             }
         }
+    }
+
+    state.preflightBlock?.let { block ->
+        val (title, needed, available) = when (block) {
+            is PreflightBlock.Storage -> Triple("Not enough free space", block.neededBytes, block.availableBytes)
+            is PreflightBlock.Memory -> Triple("Not enough free memory", block.neededBytes, block.availableBytes)
+        }
+        EdgeCaseDialog(
+            glyph = "!",
+            title = title,
+            body = "This job needs about ${formatBytes(needed)} and this device has ${formatBytes(available)} " +
+                "available right now. ${if (block is PreflightBlock.Storage) "Free up some space" else "Close a few apps"}, then try again.",
+            detail = "checked before the job starts, never partway through",
+            tone = EdgeCaseTone.WARNING,
+            onDismiss = viewModel::dismissPreflightBlock,
+            primaryLabel = "OK",
+            onPrimary = viewModel::dismissPreflightBlock,
+        )
     }
 
     if (recording != null && showActions) {
@@ -341,9 +377,8 @@ private fun TransportRow(speed: Float, isPlaying: Boolean, onSpeedClick: () -> U
 }
 
 @Composable
-private fun EmptyTranscriptCard(modifier: Modifier = Modifier) {
+private fun EmptyTranscriptCard(hasModel: Boolean, onTranscribeClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = MurmurTheme.colors
-    val context = LocalContext.current
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -353,7 +388,11 @@ private fun EmptyTranscriptCard(modifier: Modifier = Modifier) {
         Text("Not transcribed yet", color = colors.ink, fontWeight = FontWeight.SemiBold, fontSize = 14.5.sp)
         Spacer(Modifier.height(6.dp))
         Text(
-            "Run it through the on-device model to get a searchable, editable transcript.",
+            if (hasModel) {
+                "Run it through the on-device model to get a searchable, editable transcript."
+            } else {
+                "No model downloaded yet. Once one is, this button runs it on-device."
+            },
             color = colors.ink2,
             fontSize = 12.5.sp,
             lineHeight = 18.sp,
@@ -361,17 +400,49 @@ private fun EmptyTranscriptCard(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(14.dp))
         Box(
             modifier = Modifier
-                .background(colors.pri, RoundedCornerShape(14.dp))
-                .clickable {
-                    android.widget.Toast.makeText(
-                        context,
-                        "Transcription pipeline lands in Milestone 6",
-                        android.widget.Toast.LENGTH_SHORT,
-                    ).show()
-                }
+                .background(if (hasModel) colors.pri else colors.surf3, RoundedCornerShape(14.dp))
+                .clickable(enabled = hasModel, onClick = onTranscribeClick)
                 .padding(horizontal = 18.dp, vertical = 11.dp),
         ) {
-            Text("Transcribe", color = colors.priOn, fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
+            Text(
+                "Transcribe",
+                color = if (hasModel) colors.priOn else colors.ink3,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.5.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun TranscribingCard(job: TranscriptionJob, modifier: Modifier = Modifier) {
+    val colors = MurmurTheme.colors
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(colors.surf2, RoundedCornerShape(20.dp))
+            .padding(20.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            SpinnerRing(colors.pri)
+            Spacer(Modifier.width(8.dp))
+            Text("TRANSCRIBING", color = colors.pri, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.2.sp)
+            Spacer(Modifier.weight(1f))
+            Text(
+                "${job.windowsDone}/${job.windowsTotal} windows",
+                color = colors.ink2,
+                fontFamily = JetBrainsMonoFamily,
+                fontSize = 12.sp,
+            )
+        }
+        Spacer(Modifier.height(14.dp))
+        Box(modifier = Modifier.fillMaxWidth().height(6.dp).background(colors.surf3, RoundedCornerShape(4.dp))) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(job.progress.coerceIn(0f, 1f))
+                    .height(6.dp)
+                    .background(colors.pri, RoundedCornerShape(4.dp)),
+            )
         }
     }
 }

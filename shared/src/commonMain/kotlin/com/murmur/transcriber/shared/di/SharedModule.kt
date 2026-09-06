@@ -12,7 +12,6 @@ import com.murmur.transcriber.shared.domain.repository.RecordingRepository
 import com.murmur.transcriber.shared.domain.repository.TranscriptionRepository
 import com.murmur.transcriber.shared.domain.usecase.FinalizeRecordingUseCase
 import com.murmur.transcriber.shared.domain.usecase.ImportRecordingUseCase
-import com.murmur.transcriber.shared.domain.usecase.StartTranscriptionUseCase
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -25,7 +24,8 @@ val sharedModule = module {
 
     factory { ImportRecordingUseCase(get()) }
     factory { FinalizeRecordingUseCase(get()) }
-    factory { StartTranscriptionUseCase(get(), get(), get(), get()) }
+    // StartTranscriptionUseCase is registered per-platform (see platformModule()) since
+    // resolving a recording's on-disk path needs a platform Context.
 }
 
 /** Supplies the platform-specific [DatabaseDriverFactory] binding. */

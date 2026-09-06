@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <android/log.h>
+#include <cstring>
 #include <string>
 #include <thread>
 
@@ -10,6 +11,59 @@
 #define LOG_TAG "whisper_jni"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
+// Observed on real device audio: whisper.cpp occasionally emits a segment
+// with an invalid UTF-8 byte sequence (a bad continuation byte), and
+// env->NewStringUTF aborts the whole process on that with CheckJNI enabled.
+// Repair rather than drop, so segment boundaries stay meaningful.
+static std::string sanitizeUtf8(const char *input) {
+    std::string out;
+    const auto *bytes = reinterpret_cast<const unsigned char *>(input);
+    size_t len = std::strlen(input);
+    size_t i = 0;
+    while (i < len) {
+        unsigned char b0 = bytes[i];
+        int extra;
+        if (b0 < 0x80) {
+            out += static_cast<char>(b0);
+            i++;
+            continue;
+        } else if ((b0 & 0xE0) == 0xC0) {
+            extra = 1;
+        } else if ((b0 & 0xF0) == 0xE0) {
+            extra = 2;
+        } else if ((b0 & 0xF8) == 0xF0) {
+            extra = 3;
+        } else {
+            out += "\xEF\xBF\xBD";
+            i++;
+            continue;
+        }
+
+        if (i + extra >= len) {
+            out += "\xEF\xBF\xBD";
+            i++;
+            continue;
+        }
+
+        bool valid = true;
+        for (int k = 1; k <= extra; k++) {
+            if ((bytes[i + k] & 0xC0) != 0x80) {
+                valid = false;
+                break;
+            }
+        }
+        if (!valid) {
+            out += "\xEF\xBF\xBD";
+            i++;
+            continue;
+        }
+
+        out.append(input + i, extra + 1);
+        i += extra + 1;
+    }
+    return out;
+}
 
 extern "C"
 JNIEXPORT jlong JNICALL
@@ -89,8 +143,9 @@ Java_com_murmur_transcriber_whisper_AndroidTranscriptionEngine_nativeTranscribe(
         int64_t startMs = whisper_full_get_segment_t0(ctx, i) * 10;
         int64_t endMs = whisper_full_get_segment_t1(ctx, i) * 10;
         const char *text = whisper_full_get_segment_text(ctx, i);
+        std::string safeText = sanitizeUtf8(text);
 
-        jstring jtext = env->NewStringUTF(text);
+        jstring jtext = env->NewStringUTF(safeText.c_str());
         jobject seg = env->NewObject(segClass, ctor, (jlong) startMs, (jlong) endMs, jtext);
         env->SetObjectArrayElement(out, i, seg);
         env->DeleteLocalRef(seg);

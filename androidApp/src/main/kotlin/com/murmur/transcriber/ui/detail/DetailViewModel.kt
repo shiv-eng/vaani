@@ -12,10 +12,16 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import com.murmur.transcriber.playback.PlaybackService
+import com.murmur.transcriber.recording.DeleteRecordingUseCase
+import com.murmur.transcriber.service.TranscriptionForegroundService
 import com.murmur.transcriber.shared.domain.model.Recording
 import com.murmur.transcriber.shared.domain.model.Segment
+import com.murmur.transcriber.shared.domain.model.TranscriptionJob
+import com.murmur.transcriber.shared.domain.model.TranscriptionModel
+import com.murmur.transcriber.shared.domain.repository.ModelRepository
 import com.murmur.transcriber.shared.domain.repository.RecordingRepository
 import com.murmur.transcriber.shared.domain.repository.TranscriptionRepository
+import com.murmur.transcriber.transcription.PreflightCheck
 import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +32,11 @@ import kotlinx.coroutines.launch
 
 private val SPEED_CYCLE = listOf(1f, 1.5f, 2f)
 
+sealed interface PreflightBlock {
+    data class Storage(val neededBytes: Long, val availableBytes: Long) : PreflightBlock
+    data class Memory(val neededBytes: Long, val availableBytes: Long) : PreflightBlock
+}
+
 data class DetailState(
     val recording: Recording? = null,
     val segments: List<Segment> = emptyList(),
@@ -35,6 +46,9 @@ data class DetailState(
     val durationMs: Long = 0,
     val speed: Float = 1f,
     val deleted: Boolean = false,
+    val models: List<TranscriptionModel> = emptyList(),
+    val transcriptionJob: TranscriptionJob? = null,
+    val preflightBlock: PreflightBlock? = null,
 ) {
     val activeSegmentIndex: Int
         get() = segments.indexOfLast { positionMs >= it.startMs }
@@ -45,6 +59,8 @@ class DetailViewModel(
     private val context: Context,
     private val recordingRepository: RecordingRepository,
     private val transcriptionRepository: TranscriptionRepository,
+    private val modelRepository: ModelRepository,
+    private val deleteRecordingUseCase: DeleteRecordingUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DetailState())
@@ -62,6 +78,16 @@ class DetailViewModel(
         viewModelScope.launch {
             transcriptionRepository.observeSegments(recordingId).collect { segments ->
                 _state.update { it.copy(segments = segments) }
+            }
+        }
+        viewModelScope.launch {
+            transcriptionRepository.observeJob(recordingId).collect { job ->
+                _state.update { it.copy(transcriptionJob = job) }
+            }
+        }
+        viewModelScope.launch {
+            modelRepository.observeDownloaded().collect { models ->
+                _state.update { it.copy(models = models) }
             }
         }
     }
@@ -141,9 +167,25 @@ class DetailViewModel(
 
     fun delete() {
         viewModelScope.launch {
-            recordingRepository.delete(recordingId)
+            deleteRecordingUseCase(recordingId)
             _state.update { it.copy(deleted = true) }
         }
+    }
+
+    fun startTranscription() {
+        val model = _state.value.models.firstOrNull() ?: return
+        when (val result = PreflightCheck.run(context, model.sizeBytes)) {
+            is PreflightCheck.Result.Ok ->
+                TranscriptionForegroundService.start(context, recordingId, model.id, language = null)
+            is PreflightCheck.Result.InsufficientStorage ->
+                _state.update { it.copy(preflightBlock = PreflightBlock.Storage(result.neededBytes, result.availableBytes)) }
+            is PreflightCheck.Result.LowMemory ->
+                _state.update { it.copy(preflightBlock = PreflightBlock.Memory(result.neededBytes, result.availableBytes)) }
+        }
+    }
+
+    fun dismissPreflightBlock() {
+        _state.update { it.copy(preflightBlock = null) }
     }
 
     override fun onCleared() {
