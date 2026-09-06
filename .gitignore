@@ -19,5 +19,7 @@ captures/
 *.bin
 *.gguf
 
-# Native sources vendored during the whisper.cpp spike
-whisper/src/androidMain/cpp/whisper.cpp/
+# Standalone CLI builds of whisper.cpp used for the spike (bench/quantize/cli
+# tools run via adb, outside the Gradle/Android build) — scratch, not sources
+spike/native-build-*/
+spike/models/

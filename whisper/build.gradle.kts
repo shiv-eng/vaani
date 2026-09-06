@@ -29,6 +29,14 @@ kotlin {
             implementation(libs.koin.core)
         }
 
+        // Spike-only: exercises the JNI boundary directly on a device/emulator,
+        // bypassing AudioDecoder/recording (still stubs) with a bundled WAV file.
+        // Not part of the app or meant to stay long-term — see PRD section 14.
+        androidInstrumentedTest.dependencies {
+            implementation(libs.androidx.test.runner)
+            implementation(libs.androidx.test.junit)
+        }
+
         if (isMacOs) {
             val iosX64Main by getting
             val iosArm64Main by getting
@@ -46,11 +54,40 @@ kotlin {
 android {
     namespace = "com.murmur.transcriber.whisper"
     compileSdk = 35
+    ndkVersion = "27.2.12479018"
 
     defaultConfig {
         minSdk = 26
-        // externalNativeBuild (CMake against the whisper.cpp submodule) is wired
-        // here during the spike stage — see PRD section 14. Nothing to build yet.
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // x86_64 is here only so the spike can run on the Android Studio emulator
+        // before a physical reference device (D-01) is named. Narrow this to the
+        // ABIs the reference device actually needs once it's picked.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+        }
+
+        externalNativeBuild {
+            cmake {
+                cppFlags += "-std=c++17"
+                // CMake has no optimization flags by default; Gradle's "debug" Android
+                // build type does not imply an optimized native build type. Without
+                // this, ggml's matrix-multiply kernels run at -O0 — the spike's first
+                // run at that setting measured a 104x real-time factor on the emulator,
+                // entirely an artifact of this flag, not a signal about whisper.cpp itself.
+                arguments += listOf(
+                    "-DANDROID_STL=c++_shared",
+                    "-DCMAKE_BUILD_TYPE=Release",
+                )
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/androidMain/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     compileOptions {
