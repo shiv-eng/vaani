@@ -34,16 +34,20 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.murmur.transcriber.ui.components.MurmurBottomBar
 import com.murmur.transcriber.ui.components.MurmurTab
+import com.murmur.transcriber.shared.data.AppSettings
 import com.murmur.transcriber.ui.detail.DetailScreen
 import com.murmur.transcriber.ui.home.HomeScreen
 import com.murmur.transcriber.ui.importing.ImportScreen
 import com.murmur.transcriber.ui.library.LibraryScreen
+import com.murmur.transcriber.ui.onboarding.OnboardingScreen
 import com.murmur.transcriber.ui.record.RecordScreen
 import com.murmur.transcriber.ui.storage.StorageScreen
 import com.murmur.transcriber.ui.theme.MurmurTheme
 import androidx.compose.foundation.background
+import org.koin.android.ext.android.inject
 
 private object Routes {
+    const val ONBOARDING = "onboarding"
     const val HOME = "home"
     const val LIBRARY = "library"
     const val SEARCH = "search"
@@ -57,15 +61,18 @@ private object Routes {
 class MainActivity : ComponentActivity() {
 
     private val pendingImportUri = mutableStateOf<Uri?>(null)
+    private val appSettings: AppSettings by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         pendingImportUri.value = extractImportUri(intent)
+        val startDestination = if (appSettings.hasCompletedOnboarding) Routes.HOME else Routes.ONBOARDING
 
         setContent {
             MurmurTheme {
                 MurmurApp(
+                    startDestination = startDestination,
                     pendingImportUri = pendingImportUri.value,
                     onImportConsumed = { pendingImportUri.value = null },
                 )
@@ -92,7 +99,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun MurmurApp(pendingImportUri: Uri?, onImportConsumed: () -> Unit) {
+private fun MurmurApp(startDestination: String, pendingImportUri: Uri?, onImportConsumed: () -> Unit) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -124,12 +131,21 @@ private fun MurmurApp(pendingImportUri: Uri?, onImportConsumed: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
         NavHost(
             navController = navController,
-            startDestination = Routes.HOME,
+            startDestination = startDestination,
             enterTransition = { fadeIn(tween(220)) },
             exitTransition = { fadeOut(tween(160)) },
             popEnterTransition = { fadeIn(tween(220)) },
             popExitTransition = { fadeOut(tween(160)) },
         ) {
+            composable(Routes.ONBOARDING) {
+                OnboardingScreen(
+                    onComplete = {
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.ONBOARDING) { inclusive = true }
+                        }
+                    },
+                )
+            }
             composable(Routes.HOME) {
                 HomeScreen(
                     onOpenRecording = { id -> navController.navigate(Routes.detail(id)) },

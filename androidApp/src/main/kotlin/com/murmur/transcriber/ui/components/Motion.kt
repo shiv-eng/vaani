@@ -90,6 +90,35 @@ fun rememberSpinDegrees(): Float {
     return degrees
 }
 
+/** `mring` (onboarding halo, README "Motion"): a 0→1 sweep driving scale/alpha outward, staggered by [delayMillis]. */
+@Composable
+fun rememberRingProgress(delayMillis: Int = 0, periodMillis: Int = 2400): Float {
+    val transition = rememberInfiniteTransition(label = "ring")
+    val progress by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(periodMillis, delayMillis = delayMillis, easing = LinearEasing)),
+        label = "ringProgress",
+    )
+    return progress
+}
+
+/** `mwave` (wordmark / live bars, README "Motion"): a bar's height scale, staggered by [delayMillis]. */
+@Composable
+fun rememberWaveScale(delayMillis: Int = 0, periodMillis: Int = 900): Float {
+    val transition = rememberInfiniteTransition(label = "wave")
+    val scale by transition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 1f,
+        animationSpec = InfiniteRepeatableSpec(
+            animation = tween(periodMillis, delayMillis = delayMillis, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "waveScale",
+    )
+    return scale
+}
+
 /** `mbreathe` (stop button idle, README "Motion"): scale 1→1.05, 3s ease-in-out, infinite. */
 @Composable
 fun rememberBreatheScale(): Float {

@@ -15,7 +15,7 @@ selectById:
 SELECT * FROM model WHERE id = ?;
 
 insert:
-INSERT INTO model(id, name, variant, fileName, sizeBytes, sha256, downloadedAt)
+INSERT OR REPLACE INTO model(id, name, variant, fileName, sizeBytes, sha256, downloadedAt)
 VALUES (?, ?, ?, ?, ?, ?, ?);
 
 deleteById:
