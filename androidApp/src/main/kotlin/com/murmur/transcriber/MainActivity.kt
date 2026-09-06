@@ -33,6 +33,7 @@ import com.murmur.transcriber.ui.home.HomeScreen
 import com.murmur.transcriber.ui.importing.ImportScreen
 import com.murmur.transcriber.ui.library.LibraryScreen
 import com.murmur.transcriber.ui.record.RecordScreen
+import com.murmur.transcriber.ui.storage.StorageScreen
 import com.murmur.transcriber.ui.theme.MurmurTheme
 import androidx.compose.foundation.background
 
@@ -129,7 +130,7 @@ private fun MurmurApp(pendingImportUri: Uri?, onImportConsumed: () -> Unit) {
                 )
             }
             composable(Routes.SEARCH) { PlaceholderScreen("Search") }
-            composable(Routes.STORAGE) { PlaceholderScreen("Storage") }
+            composable(Routes.STORAGE) { StorageScreen() }
             composable(Routes.RECORD) {
                 RecordScreen(
                     onBack = { navController.popBackStack() },

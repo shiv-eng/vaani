@@ -49,6 +49,15 @@ fun formatBytes(bytes: Long): String {
     }
 }
 
+/** "1.36" — the Storage screen's big usage figure, always in GB with two decimals. */
+fun formatGbValue(bytes: Long): String {
+    val gb = bytes / 1_073_741_824.0
+    return "%.2f".format(gb)
+}
+
+/** "64" — device total capacity, rounded to the nearest whole GB. */
+fun formatGbWhole(bytes: Long): String = (bytes / 1_073_741_824.0).roundToInt().toString()
+
 private fun roundTo(value: Double, decimals: Int): String {
     val factor = Math.pow(10.0, decimals.toDouble())
     return ((value * factor).roundToInt() / factor).let {
