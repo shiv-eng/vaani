@@ -10,6 +10,7 @@ import com.murmur.transcriber.shared.domain.pipeline.createAudioDecoder
 import com.murmur.transcriber.shared.domain.repository.ModelRepository
 import com.murmur.transcriber.shared.domain.repository.RecordingRepository
 import com.murmur.transcriber.shared.domain.repository.TranscriptionRepository
+import com.murmur.transcriber.shared.domain.usecase.FinalizeRecordingUseCase
 import com.murmur.transcriber.shared.domain.usecase.ImportRecordingUseCase
 import com.murmur.transcriber.shared.domain.usecase.StartTranscriptionUseCase
 import org.koin.core.module.Module
@@ -23,6 +24,7 @@ val sharedModule = module {
     single<AudioDecoder> { createAudioDecoder() }
 
     factory { ImportRecordingUseCase(get()) }
+    factory { FinalizeRecordingUseCase(get()) }
     factory { StartTranscriptionUseCase(get(), get(), get(), get()) }
 }
 
