@@ -30,15 +30,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.BookmarkAdd
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -53,6 +60,9 @@ import androidx.compose.ui.zIndex
 import com.murmur.transcriber.shared.domain.model.Recording
 import com.murmur.transcriber.shared.domain.model.RecordingSource
 import com.murmur.transcriber.shared.domain.model.Segment
+import com.murmur.transcriber.ui.components.DeleteRecordingDialog
+import com.murmur.transcriber.ui.components.RecordingActionsSheetContent
+import com.murmur.transcriber.ui.components.RenameDialog
 import com.murmur.transcriber.ui.components.mrise
 import com.murmur.transcriber.ui.components.mslide
 import com.murmur.transcriber.ui.format.formatBytes
@@ -66,6 +76,7 @@ import kotlin.random.Random
 
 private val PressSpring = spring<Float>(dampingRatio = 0.75f, stiffness = Spring.StiffnessMediumLow)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
     recordingId: String,
@@ -75,9 +86,14 @@ fun DetailScreen(
     val state by viewModel.state.collectAsState()
     val colors = MurmurTheme.colors
     val recording = state.recording
+    var showActions by remember { mutableStateOf(false) }
+    var renaming by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf(false) }
+
+    LaunchedEffect(state.deleted) { if (state.deleted) onBack() }
 
     Column(modifier = Modifier.fillMaxSize().background(colors.bg).mrise()) {
-        DetailHeader(recording = recording, onBack = onBack)
+        DetailHeader(recording = recording, onBack = onBack, onOverflowClick = { showActions = true })
 
         if (recording == null) return@Column
 
@@ -149,10 +165,40 @@ fun DetailScreen(
             }
         }
     }
+
+    if (recording != null && showActions) {
+        val sheetState = rememberModalBottomSheetState()
+        ModalBottomSheet(onDismissRequest = { showActions = false }, sheetState = sheetState) {
+            RecordingActionsSheetContent(
+                recording = recording,
+                onRename = { showActions = false; renaming = true },
+                onEditTranscript = { showActions = false /* TODO: transcript editor lands with Milestone 8 */ },
+                onExport = { showActions = false /* TODO: export sheet lands with Milestone 8 */ },
+                onDelete = { showActions = false; deleting = true },
+                onClose = { showActions = false },
+            )
+        }
+    }
+
+    if (recording != null && renaming) {
+        RenameDialog(
+            recording = recording,
+            onDismiss = { renaming = false },
+            onConfirm = { name -> viewModel.rename(name); renaming = false },
+        )
+    }
+
+    if (recording != null && deleting) {
+        DeleteRecordingDialog(
+            recording = recording,
+            onDismiss = { deleting = false },
+            onConfirm = { viewModel.delete(); deleting = false },
+        )
+    }
 }
 
 @Composable
-private fun DetailHeader(recording: Recording?, onBack: () -> Unit) {
+private fun DetailHeader(recording: Recording?, onBack: () -> Unit, onOverflowClick: () -> Unit) {
     val colors = MurmurTheme.colors
     Column(modifier = Modifier.fillMaxWidth().background(colors.surf)) {
         Row(
@@ -171,9 +217,18 @@ private fun DetailHeader(recording: Recording?, onBack: () -> Unit) {
             }
 
             if (recording != null) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     HeaderChip("Edit") { /* TODO: transcript editor lands with Milestone 8 */ }
                     HeaderChip("Export") { /* TODO: export sheet lands with Milestone 8 */ }
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(colors.surf2, RoundedCornerShape(12.dp))
+                            .clickable(onClick = onOverflowClick),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.Outlined.MoreVert, contentDescription = "More actions", tint = colors.ink2, modifier = Modifier.size(18.dp))
+                    }
                 }
             }
         }

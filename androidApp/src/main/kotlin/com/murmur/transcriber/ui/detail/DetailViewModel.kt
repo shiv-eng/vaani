@@ -34,6 +34,7 @@ data class DetailState(
     val positionMs: Long = 0,
     val durationMs: Long = 0,
     val speed: Float = 1f,
+    val deleted: Boolean = false,
 ) {
     val activeSegmentIndex: Int
         get() = segments.indexOfLast { positionMs >= it.startMs }
@@ -129,6 +130,20 @@ class DetailViewModel(
     fun seekTo(positionMs: Long) {
         controller?.seekTo(positionMs)
         _state.update { it.copy(positionMs = positionMs) }
+    }
+
+    fun rename(newName: String) {
+        viewModelScope.launch {
+            recordingRepository.rename(recordingId, newName)
+            _state.update { s -> s.copy(recording = s.recording?.copy(displayName = newName)) }
+        }
+    }
+
+    fun delete() {
+        viewModelScope.launch {
+            recordingRepository.delete(recordingId)
+            _state.update { it.copy(deleted = true) }
+        }
     }
 
     override fun onCleared() {

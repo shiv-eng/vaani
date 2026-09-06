@@ -11,6 +11,7 @@ interface RecordingRepository {
     /** Registers a new library item; [filePath] already sits in app-private storage. */
     suspend fun create(
         filePath: String,
+        displayName: String,
         durationMs: Long,
         sizeBytes: Long,
         source: RecordingSource,

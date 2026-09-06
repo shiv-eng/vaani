@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -26,7 +28,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.murmur.transcriber.shared.domain.model.Recording
@@ -38,6 +45,7 @@ import com.murmur.transcriber.ui.components.mrise
 import com.murmur.transcriber.ui.components.mslide
 import com.murmur.transcriber.ui.components.rememberBlinkAlpha
 import com.murmur.transcriber.ui.format.formatBytes
+import com.murmur.transcriber.ui.format.formatBytesParts
 import com.murmur.transcriber.ui.format.formatDurationShort
 import com.murmur.transcriber.ui.format.formatHoursCompact
 import com.murmur.transcriber.ui.theme.JetBrainsMonoFamily
@@ -69,14 +77,14 @@ fun HomeScreen(
             Spacer(Modifier.height(18.dp))
 
             val (hours, minutes) = formatHoursCompact(state.totalDurationMs)
-            Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                StatCard(state.recordingsCount.toString(), "recordings", Modifier.weight(1f).mslide(40))
-                StatCard(
-                    buildString { append(hours); append("h "); append(minutes) },
-                    "captured",
-                    Modifier.weight(1f).mslide(100),
-                )
-                StatCard(formatBytes(state.totalSizeBytes), "on device", Modifier.weight(1f).mslide(160))
+            val (sizeValue, sizeUnit) = formatBytesParts(state.totalSizeBytes)
+            Row(
+                modifier = Modifier.height(IntrinsicSize.Min),
+                horizontalArrangement = Arrangement.spacedBy(9.dp),
+            ) {
+                StatCard(statValue(state.recordingsCount.toString()), "recordings", Modifier.weight(1f).fillMaxHeight().mslide(40))
+                StatCard(statValue(hours, suffix = "h ", trailing = minutes), "captured", Modifier.weight(1f).fillMaxHeight().mslide(100))
+                StatCard(statValue(sizeValue, suffix = sizeUnit), "on device", Modifier.weight(1f).fillMaxHeight().mslide(160))
             }
 
             state.activeJob?.let { job ->
@@ -125,18 +133,41 @@ private fun OfflineReadyPill() {
     }
 }
 
+/** The mono value with its unit rendered smaller and dimmer (SCREENS.md #03: "unit suffixes drop to 13px ink3"). */
 @Composable
-private fun StatCard(value: String, label: String, modifier: Modifier = Modifier) {
+private fun statValue(main: String, suffix: String? = null, trailing: String? = null): AnnotatedString {
+    val colors = MurmurTheme.colors
+    return buildAnnotatedString {
+        append(main)
+        if (suffix != null) {
+            withStyle(SpanStyle(fontSize = 13.sp, color = colors.ink3)) { append(suffix) }
+        }
+        trailing?.let { append(it) }
+    }
+}
+
+@Composable
+private fun StatCard(value: AnnotatedString, label: String, modifier: Modifier = Modifier) {
     val colors = MurmurTheme.colors
     Column(
         modifier = modifier
             .background(colors.surf, RoundedCornerShape(19.dp))
             .border(1.dp, colors.line, RoundedCornerShape(19.dp))
             .padding(horizontal = 13.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.Top,
     ) {
-        Text(value, color = colors.ink, fontFamily = JetBrainsMonoFamily, fontSize = 21.sp, fontWeight = FontWeight.Medium)
+        Text(
+            value,
+            color = colors.ink,
+            fontFamily = JetBrainsMonoFamily,
+            fontSize = 21.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Clip,
+        )
         Spacer(Modifier.height(3.dp))
-        Text(label, color = colors.ink3, style = MaterialTheme.typography.bodySmall)
+        Text(label, color = colors.ink3, style = MaterialTheme.typography.bodySmall, maxLines = 1)
+        Spacer(Modifier.weight(1f))
     }
 }
 

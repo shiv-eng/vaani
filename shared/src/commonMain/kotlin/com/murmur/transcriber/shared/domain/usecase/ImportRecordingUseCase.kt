@@ -14,12 +14,14 @@ class ImportRecordingUseCase(
 ) {
     suspend operator fun invoke(
         filePath: String,
+        displayName: String,
         durationMs: Long,
         sizeBytes: Long,
         mimeType: String,
         sampleRate: Int,
     ): Recording = recordingRepository.create(
         filePath = filePath,
+        displayName = displayName,
         durationMs = durationMs,
         sizeBytes = sizeBytes,
         source = RecordingSource.IMPORTED,

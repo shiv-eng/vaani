@@ -47,6 +47,7 @@ class ImportViewModel(
         viewModelScope.launch {
             val recording = importRecordingUseCase(
                 filePath = info.filePath,
+                displayName = info.displayFileName,
                 durationMs = info.durationMs,
                 sizeBytes = info.sizeBytes,
                 mimeType = info.mimeType,

@@ -22,14 +22,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -44,7 +41,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.murmur.transcriber.shared.domain.model.Recording
+import com.murmur.transcriber.ui.components.DeleteRecordingDialog
 import com.murmur.transcriber.ui.components.KindBadge
+import com.murmur.transcriber.ui.components.RecordingActionsSheetContent
+import com.murmur.transcriber.ui.components.RenameDialog
 import com.murmur.transcriber.ui.components.Waveform
 import com.murmur.transcriber.ui.components.kind
 import com.murmur.transcriber.ui.components.mrise
@@ -147,72 +147,31 @@ fun LibraryScreen(
     actionsFor?.let { recording ->
         val sheetState = rememberModalBottomSheetState()
         ModalBottomSheet(onDismissRequest = { actionsFor = null }, sheetState = sheetState) {
-            Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
-                Text(recording.displayName, style = MaterialTheme.typography.titleMedium, color = colors.ink, maxLines = 1)
-                Spacer(Modifier.height(14.dp))
-                ActionRow("Rename", "Inline, display name only") {
-                    actionsFor = null
-                    renaming = recording
-                }
-                ActionRow("Export or share", "Text, clipboard, share sheet") {
-                    actionsFor = null
-                    // TODO: wire once export exists (Milestone 8)
-                }
-                ActionRow("Delete", "Audio, transcript and rows together — frees ${formatBytes(recording.sizeBytes)}", danger = true) {
-                    actionsFor = null
-                    deleting = recording
-                }
-                Spacer(Modifier.height(12.dp))
-            }
+            RecordingActionsSheetContent(
+                recording = recording,
+                onRename = { actionsFor = null; renaming = recording },
+                onEditTranscript = { actionsFor = null /* TODO: transcript editor lands with Milestone 8 */ },
+                onExport = { actionsFor = null /* TODO: export sheet lands with Milestone 8 */ },
+                onDelete = { actionsFor = null; deleting = recording },
+                onClose = { actionsFor = null },
+            )
         }
     }
 
     renaming?.let { recording ->
-        var text by remember(recording.id) { mutableStateOf(recording.displayName) }
-        AlertDialog(
-            onDismissRequest = { renaming = null },
-            title = { Text("Rename") },
-            text = {
-                OutlinedTextField(value = text, onValueChange = { text = it }, singleLine = true)
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.onIntent(LibraryIntent.Rename(recording.id, text))
-                    renaming = null
-                }) { Text("Save name") }
-            },
-            dismissButton = { TextButton(onClick = { renaming = null }) { Text("Cancel") } },
+        RenameDialog(
+            recording = recording,
+            onDismiss = { renaming = null },
+            onConfirm = { name -> viewModel.onIntent(LibraryIntent.Rename(recording.id, name)); renaming = null },
         )
     }
 
     deleting?.let { recording ->
-        AlertDialog(
-            onDismissRequest = { deleting = null },
-            title = { Text("Delete this recording?") },
-            text = { Text("The audio file, the transcript and every database row about it go together, for real. This cannot be undone.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.onIntent(LibraryIntent.Delete(recording.id))
-                    deleting = null
-                }) { Text("Delete") }
-            },
-            dismissButton = { TextButton(onClick = { deleting = null }) { Text("Cancel") } },
+        DeleteRecordingDialog(
+            recording = recording,
+            onDismiss = { deleting = null },
+            onConfirm = { viewModel.onIntent(LibraryIntent.Delete(recording.id)); deleting = null },
         )
-    }
-}
-
-@Composable
-private fun ActionRow(label: String, meta: String, danger: Boolean = false, onClick: () -> Unit) {
-    val colors = MurmurTheme.colors
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
-    ) {
-        Text(label, color = if (danger) colors.acc else colors.ink, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-        Spacer(Modifier.height(2.dp))
-        Text(meta, color = colors.ink3, fontSize = 11.5.sp)
     }
 }
 

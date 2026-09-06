@@ -49,6 +49,19 @@ fun formatBytes(bytes: Long): String {
     }
 }
 
+/** "1.2" to "GB" — split for the Home stat card, where the unit renders smaller (SCREENS.md #03). */
+fun formatBytesParts(bytes: Long): Pair<String, String> {
+    val gb = bytes / 1_073_741_824.0
+    val mb = bytes / 1_048_576.0
+    val kb = bytes / 1024.0
+    return when {
+        gb >= 1.0 -> roundTo(gb, 1) to "GB"
+        mb >= 1.0 -> roundTo(mb, 1) to "MB"
+        kb >= 1.0 -> roundTo(kb, 1) to "KB"
+        else -> bytes.toString() to "B"
+    }
+}
+
 /** "1.36" — the Storage screen's big usage figure, always in GB with two decimals. */
 fun formatGbValue(bytes: Long): String {
     val gb = bytes / 1_073_741_824.0

@@ -30,6 +30,7 @@ class RecordingRepositoryImpl(
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun create(
         filePath: String,
+        displayName: String,
         durationMs: Long,
         sizeBytes: Long,
         source: RecordingSource,
@@ -41,7 +42,7 @@ class RecordingRepositoryImpl(
         val createdAt = Clock.System.now().toEpochMilliseconds()
         queries.insert(
             id = id,
-            displayName = fileName,
+            displayName = displayName,
             fileName = fileName,
             createdAt = createdAt,
             durationMs = durationMs,

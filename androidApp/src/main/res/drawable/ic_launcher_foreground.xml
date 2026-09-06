@@ -4,16 +4,15 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Placeholder mark: a mic capsule. Replace once the product name (D-03) is settled. -->
+    <!-- The wordmark's three-bar mark (README "Motion" mwave / SCREENS.md #01), static here.
+         Two pri bars flank one acc bar, matching "third bar is acc". -->
     <path
-        android:fillColor="#F6ECE0"
-        android:pathData="M54,28 a14,14 0 0 1 14,14 v18 a14,14 0 0 1 -28,0 v-18 a14,14 0 0 1 14,-14 Z" />
+        android:fillColor="#A79BFF"
+        android:pathData="M28,38 A6,6 0 1 1 40,38 L40,70 A6,6 0 1 1 28,70 Z" />
     <path
-        android:strokeColor="#F6ECE0"
-        android:strokeWidth="4"
-        android:pathData="M38,58 v4 a16,16 0 0 0 32,0 v-4" />
+        android:fillColor="#A79BFF"
+        android:pathData="M48,28 A6,6 0 1 1 60,28 L60,80 A6,6 0 1 1 48,80 Z" />
     <path
-        android:strokeColor="#F6ECE0"
-        android:strokeWidth="4"
-        android:pathData="M54,78 v8" />
+        android:fillColor="#FF8A66"
+        android:pathData="M68,34 A6,6 0 1 1 80,34 L80,74 A6,6 0 1 1 68,74 Z" />
 </vector>
