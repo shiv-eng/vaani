@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.murmur.transcriber.importing.ImportedFileInfo
+import com.murmur.transcriber.ui.components.mrise
 import com.murmur.transcriber.ui.format.formatBytes
 import com.murmur.transcriber.ui.format.formatDurationShort
 import com.murmur.transcriber.ui.theme.JetBrainsMonoFamily
@@ -53,7 +54,7 @@ fun ImportScreen(
     LaunchedEffect(uri) { viewModel.stage(uri) }
     LaunchedEffect(state.savedRecordingId) { state.savedRecordingId?.let(onFinished) }
 
-    Column(modifier = Modifier.fillMaxSize().background(colors.bg).padding(horizontal = 20.dp, vertical = 22.dp)) {
+    Column(modifier = Modifier.fillMaxSize().background(colors.bg).padding(horizontal = 20.dp, vertical = 22.dp).mrise()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(
                 modifier = Modifier

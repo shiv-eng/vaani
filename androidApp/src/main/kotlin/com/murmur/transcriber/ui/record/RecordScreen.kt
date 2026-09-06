@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -46,6 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.murmur.transcriber.ui.components.mrise
 import com.murmur.transcriber.ui.components.rememberBlinkAlpha
 import com.murmur.transcriber.ui.components.rememberBreatheScale
 import com.murmur.transcriber.ui.theme.JetBrainsMonoFamily
@@ -77,19 +79,20 @@ fun RecordScreen(
         if (already) viewModel.start() else permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.bg)
-            .background(
-                Brush.radialGradient(
-                    colors = listOf(colors.priDim.copy(alpha = 0.55f), Color.Transparent),
-                    center = Offset.Unspecified,
-                    radius = 900f,
+    Box(modifier = Modifier.fillMaxSize().background(colors.bg)) {
+        // "520px radial glow bleeding off the bottom" (SCREENS.md #04) — sized
+        // and offset explicitly rather than centered on the whole screen.
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(y = 140.dp)
+                .size(520.dp, 420.dp)
+                .background(
+                    Brush.radialGradient(listOf(colors.priDim.copy(alpha = 0.55f), Color.Transparent)),
+                    CircleShape,
                 ),
-            ),
-    ) {
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 22.dp)) {
+        )
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 22.dp).mrise()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

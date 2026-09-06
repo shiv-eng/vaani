@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -26,13 +26,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.murmur.transcriber.shared.domain.model.Recording
-import com.murmur.transcriber.shared.domain.model.TranscriptionState
+import com.murmur.transcriber.ui.components.KindBadge
+import com.murmur.transcriber.ui.components.MiniWaveform
 import com.murmur.transcriber.ui.components.SpinnerRing
+import com.murmur.transcriber.ui.components.kind
 import com.murmur.transcriber.ui.components.mrise
 import com.murmur.transcriber.ui.components.mslide
 import com.murmur.transcriber.ui.components.rememberBlinkAlpha
@@ -54,7 +55,7 @@ fun HomeScreen(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(colors.bg).padding(horizontal = 20.dp).mrise(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 22.dp, bottom = 128.dp),
+        contentPadding = PaddingValues(top = 22.dp, bottom = 128.dp),
     ) {
         item {
             Row(
@@ -201,6 +202,7 @@ private fun RecentRow(recording: Recording, onClick: () -> Unit, modifier: Modif
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(13.dp),
     ) {
+        MiniWaveform(seed = recording.id.hashCode())
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 recording.displayName,
@@ -217,22 +219,6 @@ private fun RecentRow(recording: Recording, onClick: () -> Unit, modifier: Modif
                 fontSize = 11.5.sp,
             )
         }
-        StateBadge(recording.transcriptionState)
-    }
-}
-
-@Composable
-private fun StateBadge(state: TranscriptionState) {
-    val colors = MurmurTheme.colors
-    val (label, fg, bg) = when (state) {
-        TranscriptionState.COMPLETE -> Triple("TEXT", colors.priOn, colors.pri)
-        TranscriptionState.RUNNING, TranscriptionState.QUEUED -> Triple("RUNNING", colors.bg, colors.acc)
-        TranscriptionState.NONE -> Triple("RAW", colors.ink3, Color.Transparent)
-        else -> Triple(state.name, colors.ink2, colors.surf3)
-    }
-    Box(
-        modifier = Modifier.background(bg, RoundedCornerShape(8.dp)).padding(horizontal = 9.dp, vertical = 5.dp),
-    ) {
-        Text(label, color = fg, style = MaterialTheme.typography.labelSmall)
+        KindBadge(recording.kind())
     }
 }

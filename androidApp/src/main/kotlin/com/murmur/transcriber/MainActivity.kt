@@ -31,6 +31,7 @@ import com.murmur.transcriber.ui.importing.ImportScreen
 import com.murmur.transcriber.ui.library.LibraryScreen
 import com.murmur.transcriber.ui.record.RecordScreen
 import com.murmur.transcriber.ui.theme.MurmurTheme
+import androidx.compose.foundation.background
 
 private object Routes {
     const val HOME = "home"
@@ -116,7 +117,11 @@ private fun MurmurApp(pendingImportUri: Uri?, onImportConsumed: () -> Unit) {
                 )
             }
             composable(Routes.LIBRARY) {
-                LibraryScreen(onImportClick = { pickDocument.launch(arrayOf("audio/*")) })
+                LibraryScreen(
+                    onImportClick = { pickDocument.launch(arrayOf("audio/*")) },
+                    onSearchClick = { navController.navigateToTab(Routes.SEARCH) },
+                    onOpenRecording = { /* TODO: detail screen (Milestone 4) */ },
+                )
             }
             composable(Routes.SEARCH) { PlaceholderScreen("Search") }
             composable(Routes.STORAGE) { PlaceholderScreen("Storage") }
@@ -181,7 +186,11 @@ private fun NavHostController.navigateToTab(route: String) {
 
 @Composable
 private fun PlaceholderScreen(name: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("$name — coming soon")
+    val colors = MurmurTheme.colors
+    Box(
+        modifier = Modifier.fillMaxSize().background(colors.bg),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text("$name — coming soon", color = colors.ink3)
     }
 }
