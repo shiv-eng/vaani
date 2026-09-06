@@ -23,6 +23,19 @@ fun formatDurationShort(ms: Long): String {
     }
 }
 
+/** "1:52:04", "48:12" — player scrubber position/total. */
+fun formatMmSs(ms: Long): String {
+    val totalSeconds = ms / 1000
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return if (hours > 0) {
+        "$hours:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
+    } else {
+        "$minutes:${seconds.toString().padStart(2, '0')}"
+    }
+}
+
 /** "84.2 MB", "1.2 GB" — storage figures throughout the design. */
 fun formatBytes(bytes: Long): String {
     val gb = bytes / 1_073_741_824.0

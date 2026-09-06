@@ -51,6 +51,16 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
+        <!-- FR-06: background playback with media notification controls -->
+        <service
+            android:name=".playback.PlaybackService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>

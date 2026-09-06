@@ -1,5 +1,6 @@
 package com.murmur.transcriber.di
 
+import com.murmur.transcriber.ui.detail.DetailViewModel
 import com.murmur.transcriber.ui.home.HomeViewModel
 import com.murmur.transcriber.ui.importing.ImportViewModel
 import com.murmur.transcriber.ui.library.LibraryViewModel
@@ -13,4 +14,12 @@ val appModule = module {
     viewModel { HomeViewModel(recordingRepository = get()) }
     viewModel { RecordViewModel(context = androidContext(), finalizeRecordingUseCase = get()) }
     viewModel { ImportViewModel(context = androidContext(), importRecordingUseCase = get()) }
+    viewModel { (recordingId: String) ->
+        DetailViewModel(
+            recordingId = recordingId,
+            context = androidContext(),
+            recordingRepository = get(),
+            transcriptionRepository = get(),
+        )
+    }
 }

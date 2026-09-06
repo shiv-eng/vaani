@@ -20,12 +20,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.murmur.transcriber.ui.components.MurmurBottomBar
 import com.murmur.transcriber.ui.components.MurmurTab
+import com.murmur.transcriber.ui.detail.DetailScreen
 import com.murmur.transcriber.ui.home.HomeScreen
 import com.murmur.transcriber.ui.importing.ImportScreen
 import com.murmur.transcriber.ui.library.LibraryScreen
@@ -40,6 +43,8 @@ private object Routes {
     const val STORAGE = "storage"
     const val RECORD = "record"
     const val IMPORT = "import"
+    const val DETAIL = "detail/{recordingId}"
+    fun detail(recordingId: String) = "detail/$recordingId"
 }
 
 class MainActivity : ComponentActivity() {
@@ -112,7 +117,7 @@ private fun MurmurApp(pendingImportUri: Uri?, onImportConsumed: () -> Unit) {
         NavHost(navController = navController, startDestination = Routes.HOME) {
             composable(Routes.HOME) {
                 HomeScreen(
-                    onOpenRecording = { /* TODO: detail screen lands with playback (Milestone 4) */ },
+                    onOpenRecording = { id -> navController.navigate(Routes.detail(id)) },
                     onOpenLibrary = { navController.navigateToTab(Routes.LIBRARY) },
                 )
             }
@@ -120,7 +125,7 @@ private fun MurmurApp(pendingImportUri: Uri?, onImportConsumed: () -> Unit) {
                 LibraryScreen(
                     onImportClick = { pickDocument.launch(arrayOf("audio/*")) },
                     onSearchClick = { navController.navigateToTab(Routes.SEARCH) },
-                    onOpenRecording = { /* TODO: detail screen (Milestone 4) */ },
+                    onOpenRecording = { id -> navController.navigate(Routes.detail(id)) },
                 )
             }
             composable(Routes.SEARCH) { PlaceholderScreen("Search") }
@@ -128,12 +133,19 @@ private fun MurmurApp(pendingImportUri: Uri?, onImportConsumed: () -> Unit) {
             composable(Routes.RECORD) {
                 RecordScreen(
                     onBack = { navController.popBackStack() },
-                    onFinished = {
-                        // TODO: land on the player+transcript screen (Milestone 4) instead
-                        // of just going back, once that screen exists.
-                        navController.popBackStack()
+                    onFinished = { id ->
+                        navController.navigate(Routes.detail(id)) {
+                            popUpTo(Routes.RECORD) { inclusive = true }
+                        }
                     },
                 )
+            }
+            composable(
+                Routes.DETAIL,
+                arguments = listOf(navArgument("recordingId") { type = NavType.StringType }),
+            ) { backStackEntry ->
+                val recordingId = backStackEntry.arguments?.getString("recordingId").orEmpty()
+                DetailScreen(recordingId = recordingId, onBack = { navController.popBackStack() })
             }
             composable(Routes.IMPORT) {
                 val uri = activeImportUri
