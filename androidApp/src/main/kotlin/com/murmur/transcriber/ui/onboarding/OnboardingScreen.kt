@@ -83,14 +83,14 @@ private fun WelcomeStep(onSetUpClick: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
-                .align(Alignment.TopCenter)
+                .align(Alignment.Center)
                 .size(420.dp)
                 .background(
                     Brush.radialGradient(listOf(colors.priDim.copy(alpha = 0.5f), Color.Transparent)),
                     CircleShape,
                 ),
         )
-        RingHalo(modifier = Modifier.align(Alignment.TopCenter))
+        RingHalo(modifier = Modifier.align(Alignment.Center))
 
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 26.dp, vertical = 34.dp).mrise()) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -167,7 +167,7 @@ private fun WelcomeStep(onSetUpClick: () -> Unit) {
 @Composable
 private fun RingHalo(modifier: Modifier = Modifier) {
     val colors = MurmurTheme.colors
-    Box(modifier = modifier.size(200.dp).padding(top = 60.dp), contentAlignment = Alignment.TopCenter) {
+    Box(modifier = modifier.size(200.dp), contentAlignment = Alignment.Center) {
         listOf(0, 800, 1600).forEach { delay ->
             val progress = rememberRingProgress(delayMillis = delay)
             Canvas(modifier = Modifier.size(180.dp * (0.4f + 0.6f * progress))) {
@@ -252,7 +252,7 @@ private fun DownloadStep(
         Text("The speech model, once", style = MaterialTheme.typography.headlineSmall, color = colors.ink, fontSize = 25.sp)
         Spacer(Modifier.height(8.dp))
         Text(
-            "$totalSize over the wire. After the checksum passes, the app never makes another network call.",
+            "$totalSize, downloaded once. After that, everything happens right here on your phone — no internet needed.",
             color = colors.ink2,
             fontSize = 13.5.sp,
             lineHeight = 20.sp,
@@ -314,14 +314,14 @@ private fun DownloadStep(
             }
             Spacer(Modifier.height(14.dp))
             Text(
-                "${model.name} · ${model.variant} · Q5_1",
+                "Speech model · Hindi & English",
                 color = colors.ink,
                 fontFamily = ManropeFamily,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
             )
             Spacer(Modifier.height(4.dp))
-            Text("sha256 verified on completion", color = colors.ink3, fontFamily = JetBrainsMonoFamily, fontSize = 11.5.sp)
+            Text("Checked automatically once it's done", color = colors.ink3, fontSize = 11.5.sp)
 
             Spacer(Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {

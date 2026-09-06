@@ -111,7 +111,7 @@ fun StorageScreen(viewModel: StorageViewModel = koinViewModel()) {
         AlertDialog(
             onDismissRequest = { deleting = null },
             title = { Text("Delete this model?") },
-            text = { Text("\"${model.name} · ${model.variant}\" will be removed. You can download it again later.") },
+            text = { Text("The speech model will be removed. You can download it again later.") },
             confirmButton = {
                 TextButton(onClick = { viewModel.deleteModel(model.id); deleting = null }) { Text("Delete") }
             },
@@ -187,7 +187,7 @@ private fun CacheCard(cacheBytes: Long, onClear: () -> Unit, modifier: Modifier 
         Text("Cache", color = colors.ink, fontWeight = FontWeight.SemiBold, fontSize = 14.5.sp)
         Spacer(Modifier.height(4.dp))
         Text(
-            "Decoded PCM windows. Safe to clear at any time; a paused job re-decodes what it needs.",
+            "Temporary files made while transcribing. Safe to clear anytime — they're recreated automatically if needed.",
             color = colors.ink3,
             fontSize = 12.sp,
             lineHeight = 17.sp,
@@ -213,7 +213,7 @@ private fun ModelRow(model: TranscriptionModel, onDelete: () -> Unit, modifier: 
             .padding(16.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("${model.name} · ${model.variant}", color = colors.ink, fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp)
+            Text("Speech model · Hindi & English", color = colors.ink, fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp)
             Text("Delete", color = colors.acc, fontWeight = FontWeight.Bold, fontSize = 12.5.sp, modifier = Modifier.clickable(onClick = onDelete))
         }
         Spacer(Modifier.height(4.dp))

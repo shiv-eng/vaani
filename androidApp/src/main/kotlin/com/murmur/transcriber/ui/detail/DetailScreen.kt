@@ -192,9 +192,9 @@ fun DetailScreen(
         EdgeCaseDialog(
             glyph = "!",
             title = title,
-            body = "This job needs about ${formatBytes(needed)} and this device has ${formatBytes(available)} " +
-                "available right now. ${if (block is PreflightBlock.Storage) "Free up some space" else "Close a few apps"}, then try again.",
-            detail = "checked before the job starts, never partway through",
+            body = "Transcribing this needs about ${formatBytes(needed)}, and your phone has ${formatBytes(available)} " +
+                "free right now. ${if (block is PreflightBlock.Storage) "Free up some space" else "Close a few apps"}, then try again.",
+            detail = "checked before starting, so it won't fail partway through",
             tone = EdgeCaseTone.WARNING,
             onDismiss = viewModel::dismissPreflightBlock,
             primaryLabel = "OK",
@@ -429,7 +429,7 @@ private fun TranscribingCard(job: TranscriptionJob, modifier: Modifier = Modifie
             Text("TRANSCRIBING", color = colors.pri, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.2.sp)
             Spacer(Modifier.weight(1f))
             Text(
-                "${job.windowsDone}/${job.windowsTotal} windows",
+                "${(job.progress * 100).toInt()}%",
                 color = colors.ink2,
                 fontFamily = JetBrainsMonoFamily,
                 fontSize = 12.sp,

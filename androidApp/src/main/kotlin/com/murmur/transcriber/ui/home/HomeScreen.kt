@@ -89,7 +89,12 @@ fun HomeScreen(
 
             state.activeJob?.let { job ->
                 Spacer(Modifier.height(14.dp))
-                ActiveJobCard(job, onClick = { onOpenRecording(job.id) }, modifier = Modifier.mslide(200))
+                ActiveJobCard(
+                    recording = job,
+                    progress = state.activeJobProgress,
+                    onClick = { onOpenRecording(job.id) },
+                    modifier = Modifier.mslide(200),
+                )
             }
 
             Spacer(Modifier.height(26.dp))
@@ -172,7 +177,7 @@ private fun StatCard(value: AnnotatedString, label: String, modifier: Modifier =
 }
 
 @Composable
-private fun ActiveJobCard(recording: Recording, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun ActiveJobCard(recording: Recording, progress: Float, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = MurmurTheme.colors
     Column(
         modifier = modifier
@@ -212,7 +217,7 @@ private fun ActiveJobCard(recording: Recording, onClick: () -> Unit, modifier: M
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.31f)
+                    .fillMaxWidth(progress.coerceIn(0f, 1f))
                     .height(6.dp)
                     .background(colors.pri, RoundedCornerShape(4.dp)),
             )

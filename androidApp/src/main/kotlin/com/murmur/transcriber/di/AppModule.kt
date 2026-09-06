@@ -16,7 +16,7 @@ val appModule = module {
     factory { DeleteRecordingUseCase(context = androidContext(), recordingRepository = get()) }
 
     viewModel { LibraryViewModel(recordingRepository = get(), deleteRecordingUseCase = get()) }
-    viewModel { HomeViewModel(recordingRepository = get()) }
+    viewModel { HomeViewModel(recordingRepository = get(), transcriptionRepository = get()) }
     viewModel { RecordViewModel(context = androidContext(), finalizeRecordingUseCase = get()) }
     viewModel { ImportViewModel(context = androidContext(), importRecordingUseCase = get()) }
     viewModel { StorageViewModel(context = androidContext(), modelRepository = get()) }
