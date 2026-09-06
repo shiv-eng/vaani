@@ -18,10 +18,12 @@ import com.murmur.transcriber.shared.domain.model.Recording
 import com.murmur.transcriber.shared.domain.model.Segment
 import com.murmur.transcriber.shared.domain.model.TranscriptionJob
 import com.murmur.transcriber.shared.domain.model.TranscriptionModel
+import com.murmur.transcriber.shared.domain.model.TranscriptionState
 import com.murmur.transcriber.shared.domain.repository.ModelRepository
 import com.murmur.transcriber.shared.domain.repository.RecordingRepository
 import com.murmur.transcriber.shared.domain.repository.TranscriptionRepository
 import com.murmur.transcriber.transcription.PreflightCheck
+import com.murmur.transcriber.transcription.StuckJobRecovery
 import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,9 +51,16 @@ data class DetailState(
     val models: List<TranscriptionModel> = emptyList(),
     val transcriptionJob: TranscriptionJob? = null,
     val preflightBlock: PreflightBlock? = null,
+    val stuckJobDismissed: Boolean = false,
 ) {
     val activeSegmentIndex: Int
         get() = segments.indexOfLast { positionMs >= it.startMs }
+
+    /** A job an earlier, now-dead process left behind — see [StuckJobRecovery]. */
+    val stuckJob: TranscriptionJob?
+        get() = transcriptionJob?.takeIf {
+            !stuckJobDismissed && it.status == TranscriptionState.FAILED && it.error == StuckJobRecovery.STUCK_JOB_ERROR
+        }
 }
 
 class DetailViewModel(
@@ -174,9 +183,29 @@ class DetailViewModel(
 
     fun startTranscription() {
         val model = _state.value.models.firstOrNull() ?: return
+        startTranscription(model, language = null)
+    }
+
+    /**
+     * Re-invokes the same use case as [startTranscription]; it always starts from window 0,
+     * so this restarts the job rather than resuming from windowsDone (see resumeStuckJob's
+     * dialog copy, which is honest about that instead of claiming a true resume).
+     */
+    fun resumeStuckJob() {
+        val job = _state.value.transcriptionJob ?: return
+        _state.update { it.copy(stuckJobDismissed = true) }
+        val model = _state.value.models.firstOrNull { it.id == job.modelId } ?: _state.value.models.firstOrNull() ?: return
+        startTranscription(model, job.language)
+    }
+
+    fun dismissStuckJob() {
+        _state.update { it.copy(stuckJobDismissed = true) }
+    }
+
+    private fun startTranscription(model: TranscriptionModel, language: String?) {
         when (val result = PreflightCheck.run(context, model.sizeBytes)) {
             is PreflightCheck.Result.Ok ->
-                TranscriptionForegroundService.start(context, recordingId, model.id, language = null)
+                TranscriptionForegroundService.start(context, recordingId, model.id, language)
             is PreflightCheck.Result.InsufficientStorage ->
                 _state.update { it.copy(preflightBlock = PreflightBlock.Storage(result.neededBytes, result.availableBytes)) }
             is PreflightCheck.Result.LowMemory ->

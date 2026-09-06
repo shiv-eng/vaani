@@ -1,6 +1,7 @@
 package com.murmur.transcriber.di
 
 import com.murmur.transcriber.recording.DeleteRecordingUseCase
+import com.murmur.transcriber.transcription.StuckJobRecovery
 import com.murmur.transcriber.ui.detail.DetailViewModel
 import com.murmur.transcriber.ui.home.HomeViewModel
 import com.murmur.transcriber.ui.importing.ImportViewModel
@@ -13,6 +14,7 @@ import org.koin.dsl.module
 
 val appModule = module {
     factory { DeleteRecordingUseCase(context = androidContext(), recordingRepository = get()) }
+    single { StuckJobRecovery(context = androidContext(), transcriptionRepository = get()) }
 
     viewModel { LibraryViewModel(recordingRepository = get(), deleteRecordingUseCase = get()) }
     viewModel { HomeViewModel(recordingRepository = get()) }

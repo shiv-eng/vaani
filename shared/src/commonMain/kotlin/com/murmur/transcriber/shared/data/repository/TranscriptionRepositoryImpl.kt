@@ -51,6 +51,10 @@ class TranscriptionRepositoryImpl(
         requireNotNull(jobQueries.selectById(id, ::toJob).executeAsOneOrNull())
     }
 
+    override suspend fun getActiveJobs(): List<TranscriptionJob> = withContext(Dispatchers.Default) {
+        jobQueries.selectActive(::toJob).executeAsList()
+    }
+
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun appendSegment(jobId: String, segment: Segment) = withContext(Dispatchers.Default) {
         segmentQueries.insert(
@@ -62,6 +66,10 @@ class TranscriptionRepositoryImpl(
             text = segment.text,
             editedText = segment.editedText,
         )
+    }
+
+    override suspend fun markRunning(jobId: String) = withContext(Dispatchers.Default) {
+        jobQueries.markRunning(jobId)
     }
 
     override suspend fun markWindowDone(jobId: String, windowsDone: Int) = withContext(Dispatchers.Default) {

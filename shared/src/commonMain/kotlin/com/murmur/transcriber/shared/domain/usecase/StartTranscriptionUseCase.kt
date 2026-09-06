@@ -43,6 +43,7 @@ class StartTranscriptionUseCase(
 
         check(transcriptionEngine.loadModel(modelPath)) { "Failed to load model $modelPath" }
         try {
+            transcriptionRepository.markRunning(job.id)
             windows.forEachIndexed { done, window ->
                 val pcm = audioDecoder.decodeWindow(resolveAudioPath(recording.fileName), window)
                 transcriptionEngine.transcribeWindow(pcm, sampleRate = 16_000, language = language)

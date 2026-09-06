@@ -24,6 +24,12 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 updateProgress:
 UPDATE job SET windowsDone = ? WHERE id = ?;
 
+markRunning:
+UPDATE job SET status = 'RUNNING' WHERE id = ?;
+
+selectActive:
+SELECT * FROM job WHERE status = 'QUEUED' OR status = 'RUNNING';
+
 updateStatus:
 UPDATE job SET status = ?, finishedAt = ?, error = ? WHERE id = ?;
 

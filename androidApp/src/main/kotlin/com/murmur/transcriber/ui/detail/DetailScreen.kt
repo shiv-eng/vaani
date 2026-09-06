@@ -184,6 +184,22 @@ fun DetailScreen(
         }
     }
 
+    state.stuckJob?.let { job ->
+        EdgeCaseDialog(
+            glyph = "!",
+            title = "Transcription stopped unexpectedly",
+            body = "The app was closed by the system — often a battery saver — before this job " +
+                "finished. Resume starts a fresh run; it does not pick up where this one left off.",
+            detail = "${job.windowsDone}/${job.windowsTotal} windows were done before it stopped · resume recomputes all of them",
+            tone = EdgeCaseTone.WARNING,
+            onDismiss = viewModel::dismissStuckJob,
+            primaryLabel = "Resume",
+            onPrimary = viewModel::resumeStuckJob,
+            secondaryLabel = "Dismiss",
+            onSecondary = viewModel::dismissStuckJob,
+        )
+    }
+
     state.preflightBlock?.let { block ->
         val (title, needed, available) = when (block) {
             is PreflightBlock.Storage -> Triple("Not enough free space", block.neededBytes, block.availableBytes)
