@@ -19,6 +19,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:theme="@style/Theme.Murmur">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,10 +27,7 @@
             </intent-filter>
         </activity>
 
-        <!--
-          Import target for files shared from other apps (FR-03). Intent filter
-          is left minimal here; MIME types are refined once import handling lands.
-        -->
+        <!-- Import target for files shared or opened from other apps (FR-03, FR-04). -->
         <activity-alias
             android:name=".ImportActivityAlias"
             android:targetActivity=".MainActivity"
@@ -37,6 +35,12 @@
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:mimeType="audio/*" />
             </intent-filter>
         </activity-alias>

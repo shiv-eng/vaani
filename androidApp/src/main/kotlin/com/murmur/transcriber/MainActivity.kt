@@ -1,13 +1,22 @@
 package com.murmur.transcriber
 
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -18,6 +27,7 @@ import androidx.navigation.compose.rememberNavController
 import com.murmur.transcriber.ui.components.MurmurBottomBar
 import com.murmur.transcriber.ui.components.MurmurTab
 import com.murmur.transcriber.ui.home.HomeScreen
+import com.murmur.transcriber.ui.importing.ImportScreen
 import com.murmur.transcriber.ui.library.LibraryScreen
 import com.murmur.transcriber.ui.record.RecordScreen
 import com.murmur.transcriber.ui.theme.MurmurTheme
@@ -28,26 +38,66 @@ private object Routes {
     const val SEARCH = "search"
     const val STORAGE = "storage"
     const val RECORD = "record"
+    const val IMPORT = "import"
 }
 
 class MainActivity : ComponentActivity() {
 
+    private val pendingImportUri = mutableStateOf<Uri?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pendingImportUri.value = extractImportUri(intent)
 
         setContent {
             MurmurTheme {
-                MurmurApp()
+                MurmurApp(
+                    pendingImportUri = pendingImportUri.value,
+                    onImportConsumed = { pendingImportUri.value = null },
+                )
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        extractImportUri(intent)?.let { pendingImportUri.value = it }
+    }
+
+    private fun extractImportUri(intent: Intent?): Uri? = when (intent?.action) {
+        Intent.ACTION_SEND -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra(Intent.EXTRA_STREAM)
+        }
+        Intent.ACTION_VIEW -> intent.data
+        else -> null
     }
 }
 
 @Composable
-private fun MurmurApp() {
+private fun MurmurApp(pendingImportUri: Uri?, onImportConsumed: () -> Unit) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+
+    var manualImportUri by remember { mutableStateOf<Uri?>(null) }
+    val activeImportUri = pendingImportUri ?: manualImportUri
+
+    LaunchedEffect(pendingImportUri) {
+        if (pendingImportUri != null) {
+            navController.navigate(Routes.IMPORT)
+        }
+    }
+
+    val pickDocument = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            manualImportUri = uri
+            navController.navigate(Routes.IMPORT)
+        }
+    }
 
     val currentTab = when (currentRoute) {
         Routes.LIBRARY -> MurmurTab.Library
@@ -65,7 +115,9 @@ private fun MurmurApp() {
                     onOpenLibrary = { navController.navigateToTab(Routes.LIBRARY) },
                 )
             }
-            composable(Routes.LIBRARY) { LibraryScreen() }
+            composable(Routes.LIBRARY) {
+                LibraryScreen(onImportClick = { pickDocument.launch(arrayOf("audio/*")) })
+            }
             composable(Routes.SEARCH) { PlaceholderScreen("Search") }
             composable(Routes.STORAGE) { PlaceholderScreen("Storage") }
             composable(Routes.RECORD) {
@@ -77,6 +129,26 @@ private fun MurmurApp() {
                         navController.popBackStack()
                     },
                 )
+            }
+            composable(Routes.IMPORT) {
+                val uri = activeImportUri
+                if (uri == null) {
+                    PlaceholderScreen("Import")
+                } else {
+                    ImportScreen(
+                        uri = uri,
+                        onBack = {
+                            manualImportUri = null
+                            onImportConsumed()
+                            navController.popBackStack()
+                        },
+                        onFinished = {
+                            manualImportUri = null
+                            onImportConsumed()
+                            navController.popBackStack(Routes.HOME, inclusive = false)
+                        },
+                    )
+                }
             }
         }
 
