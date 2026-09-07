@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "murmur"
+rootProject.name = "vaani"
 
 include(":androidApp")
 include(":shared")

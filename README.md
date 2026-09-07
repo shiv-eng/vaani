@@ -1,4 +1,4 @@
-# Murmur (working name — see PRD decision D-03)
+# Vaani (working name — see PRD decision D-03)
 
 A recorder that transcribes hour-long audio on a cheap phone, entirely offline
 and free. Full product requirements: see the PRD (Claude artifact, linked in
@@ -62,6 +62,9 @@ three `external fun`s in `AndroidTranscriptionEngine`.
 
 ## Open, permanent decisions
 
-- **D-03**: product name and package identifier. `com.murmur.transcriber` is a
-  placeholder throughout this codebase — rename it before anything is
-  published, since the applicationId becomes permanent on first Play upload.
+- **D-03**: product name and package identifier. Renamed from "Murmur" to
+  "Vaani" and `com.quietstack.vaani` throughout this codebase after real
+  collision research (Play Store search: "Parrot", "Jot" and "Scribe" all had
+  direct existing competitors in this exact category; "Vaani" and "Awaaz" did
+  not). Still worth a final check before publishing, since the applicationId
+  becomes permanent on first Play upload.

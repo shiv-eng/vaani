@@ -77,7 +77,7 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
 }
 
 android {
-    namespace = "com.murmur.transcriber.shared"
+    namespace = "com.quietstack.vaani.shared"
     compileSdk = 35
 
     defaultConfig {
@@ -92,8 +92,8 @@ android {
 
 sqldelight {
     databases {
-        create("MurmurDatabase") {
-            packageName.set("com.murmur.transcriber.shared.db")
+        create("VaaniDatabase") {
+            packageName.set("com.quietstack.vaani.shared.db")
         }
     }
 }

@@ -52,7 +52,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.murmur.transcriber.whisper"
+    namespace = "com.quietstack.vaani.whisper"
     compileSdk = 35
     ndkVersion = "27.2.12479018"
 

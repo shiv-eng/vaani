@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.murmur.transcriber"
+    namespace = "com.quietstack.vaani"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.murmur.transcriber" // placeholder — see PRD decision D-03, permanent once published
+        applicationId = "com.quietstack.vaani" // placeholder — see PRD decision D-03, permanent once published
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
 
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
@@ -62,4 +63,7 @@ dependencies {
     implementation(libs.media3.session)
 
     implementation(libs.androidx.work.runtime.ktx)
+
+    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
 }

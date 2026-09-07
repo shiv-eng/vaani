@@ -5,12 +5,12 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     <!-- The wordmark's three-bar mark (README "Motion" mwave / SCREENS.md #01), static here.
-         Two pri bars flank one acc bar, matching "third bar is acc". -->
+         Three distinct theme colors: pri, pri2, acc (see Wordmark.kt). -->
     <path
         android:fillColor="#A79BFF"
         android:pathData="M28,38 A6,6 0 1 1 40,38 L40,70 A6,6 0 1 1 28,70 Z" />
     <path
-        android:fillColor="#A79BFF"
+        android:fillColor="#7EC4FF"
         android:pathData="M48,28 A6,6 0 1 1 60,28 L60,80 A6,6 0 1 1 48,80 Z" />
     <path
         android:fillColor="#FF8A66"

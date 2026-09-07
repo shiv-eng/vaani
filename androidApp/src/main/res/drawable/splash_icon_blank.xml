@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Deliberately invisible: the system splash screen (Android 12+) requires an
+  icon resource, but only has room for a small icon, not a full logo+name
+  lockup — so a real icon here would read as a first "splash" the app's own
+  Compose splash (MainActivity's SplashScreen, logo + "Vaani") then visibly
+  replaces with different content, feeling like two splash screens back to
+  back. A degenerate 1dp-viewport version of this (no path, near-zero size)
+  turned out to be worse: the SplashScreen API silently rejected it as an
+  invalid icon and fell back to the real launcher icon — the exact "logo
+  alone, then logo with name" the user was still seeing after that first
+  attempt. This uses the same 108dp viewport as the real launcher icon
+  (ic_launcher_foreground.xml) so it reads as a valid icon, but with a fully
+  transparent fill so nothing actually draws — background-color hold, no
+  visible icon.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,0 L108,0 L108,108 L0,108 Z" />
+</vector>

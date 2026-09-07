@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Murmur" parent="android:Theme.Material.NoActionBar" />
+    <style name="Theme.Vaani" parent="android:Theme.Material.NoActionBar" />
+
+    <!--
+      The OS shows its own splash before any app code runs at all —
+      unavoidable on Android 12+. It used to show the launcher icon here,
+      then MainActivity's own Compose splash (logo + "Vaani") replaced it a
+      moment later — two different-looking screens back to back, reported as
+      "seeing two splash screens" on a real device. The system stage's icon
+      is now a blank drawable (splash_icon_blank.xml) instead: background
+      color only, no icon, held via MainActivity's setKeepOnScreenCondition
+      until the Compose splash is ready to draw. That makes the Compose
+      splash — logo and name together — the only splash a user actually
+      perceives; the system stage is just a same-color hold beforehand, not
+      a second screen with different content.
+    -->
+    <style name="Theme.Vaani.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_blank</item>
+        <item name="postSplashScreenTheme">@style/Theme.Vaani</item>
+    </style>
 </resources>

@@ -1,0 +1,19 @@
+CREATE TABLE bookmark (
+    id TEXT NOT NULL PRIMARY KEY,
+    recordingId TEXT NOT NULL,
+    positionMs INTEGER NOT NULL,
+    createdAt INTEGER NOT NULL
+);
+
+selectForRecording:
+SELECT * FROM bookmark WHERE recordingId = ? ORDER BY positionMs ASC;
+
+insert:
+INSERT INTO bookmark(id, recordingId, positionMs, createdAt)
+VALUES (?, ?, ?, ?);
+
+deleteById:
+DELETE FROM bookmark WHERE id = ?;
+
+deleteForRecording:
+DELETE FROM bookmark WHERE recordingId = ?;

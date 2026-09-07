@@ -1,0 +1,15 @@
+-- Adds the bookmark table (see Bookmark.sq) for an app that already has a
+-- database from before that feature existed. A fresh install never runs
+-- this — Schema.create() already includes Bookmark.sq's CREATE TABLE — this
+-- path only fires for an existing database being upgraded (e.g. a Play
+-- Store update), which is exactly the case a real-device test caught: an
+-- `install -r` here reproduced precisely what a real update would hit,
+-- crashing with "no such table: bookmark" because SQLDelight only runs
+-- CREATE TABLE statements once, at first database creation, not
+-- retroactively when a new .sq file is added later.
+CREATE TABLE bookmark (
+    id TEXT NOT NULL PRIMARY KEY,
+    recordingId TEXT NOT NULL,
+    positionMs INTEGER NOT NULL,
+    createdAt INTEGER NOT NULL
+);
