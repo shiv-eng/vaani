@@ -1,70 +1,62 @@
-# Vaani (working name — see PRD decision D-03)
+# Vaani
 
-A recorder that transcribes hour-long audio on a cheap phone, entirely offline
-and free. Full product requirements: see the PRD (Claude artifact, linked in
-project notes) — this file only covers what's in the repo and what's next.
+A voice recorder for Android that also transcribes what you said — entirely
+on the phone, with no account and no cloud. Tap record, and Vaani keeps
+capturing audio in the background even if the screen locks or you switch
+apps. When you stop, it turns the recording into text automatically using an
+on-device speech model (no internet needed after the model's one-time
+download).
 
-## Status
+Every recording is a real audio file first — export it as-is, as plain text,
+or as an SRT subtitle file, whether the transcript came out right or not.
 
-Scaffold only. The module structure, data model, DI wiring, and the
-`whisper.cpp` boundary interface exist and are meant to compile, but the parts
-that need the actual native runtime or platform audio APIs are stubs that
-throw `NotImplementedError` on purpose:
+## Features
 
-- Recording audio (no `MediaRecorder` wiring yet)
-- Decoding a window to PCM (`AudioDecoder` — needs `MediaCodec`/`MediaExtractor`)
-- Running whisper.cpp itself (`TranscriptionEngine` — needs the NDK build)
-- Model download (`ModelRepository.download` — needs a model catalogue + CDN)
+- Record audio of any length, with recording surviving backgrounding/lock
+- Automatic on-device transcription (whisper.cpp), with per-segment
+  timestamps
+- Search across every transcript you've recorded
+- Bookmark exact moments in a recording
+- Edit a transcript by hand
+- Export as audio, plain text, or SRT
+- Import audio files shared from other apps
+- Pick a transcription language, or let it auto-detect
 
-Everything else — the library list, the SQLDelight schema, the transcription
-job/segment bookkeeping, the window planner — is real and has a real path to
-being exercised end to end once the native piece lands.
+## Privacy
+
+No accounts, no analytics, no ads. Recordings and transcripts live only in
+the app's private storage on-device. The only network call Vaani ever makes
+is the one-time HTTPS download of the speech model from Hugging Face's
+public file hosting — nothing else is ever sent anywhere.
 
 ## Module map
 
 ```
-androidApp/     Compose UI, ViewModels, Koin wiring, foreground service shell
+androidApp/     Compose UI, ViewModels, Koin wiring, foreground services
 shared/         KMP: domain models, use cases, repositories, SQLDelight schema
-whisper/        KMP: TranscriptionEngine interface; native glue lands here
+whisper/        KMP: TranscriptionEngine interface + the whisper.cpp/JNI glue
 ```
 
-See PRD section 09 for the full architecture rationale (why Koin over Hilt,
-SQLDelight over Room, whisper.cpp over TFLite, etc).
+Clean Architecture / MVVM: domain interfaces and use cases live in
+`shared/.../domain`, repository implementations in `shared/.../data`, and
+presentation (ViewModels + Compose screens) in `androidApp/ui`.
 
-## Before this builds
+## Building
 
-1. **Android SDK / NDK.** `local.properties` points at the SDK already
-   installed on this machine. The NDK and CMake aren't installed yet — you
-   only need them once the whisper.cpp spike starts wiring native code into
-   `:whisper/src/androidMain/cpp`.
-2. **Gradle wrapper.** Not committed yet — this repo was scaffolded without a
-   local Gradle install. Opening the project in Android Studio will offer to
-   generate the wrapper (or use its bundled Gradle) automatically. If you'd
-   rather do it from the command line and have Gradle installed, run:
-   ```bash
-   gradle wrapper --gradle-version 8.10
-   ```
+1. **Android SDK / NDK.** `local.properties` (gitignored) needs `sdk.dir`
+   pointing at your local Android SDK. NDK `27.2.12479018` and CMake are
+   required for the `:whisper` module's native build.
+2. **Gradle wrapper** is committed — `./gradlew.bat :androidApp:assembleDebug`
+   (or `./gradlew` on macOS/Linux) builds a debug APK.
+3. **Release builds** need a signing config. `androidApp/build.gradle.kts`
+   reads `VAANI_UPLOAD_STORE_FILE` / `VAANI_UPLOAD_STORE_PASSWORD` /
+   `VAANI_UPLOAD_KEY_ALIAS` / `VAANI_UPLOAD_KEY_PASSWORD` from
+   `local.properties` (or equivalent environment variables for CI) — never
+   hardcoded, never committed. Without these set, `assembleRelease` still
+   builds an unsigned APK.
 
-## Next step: the spike
+## Tech stack
 
-Per the PRD's release plan (section 14), the next real milestone is *not* more
-scaffolding — it's benchmarking whisper.cpp with a quantised base model on a
-**named** budget Android device, before any more product code. That's blocked
-on:
-
-- **D-01**: naming the actual reference handset (a purchase decision)
-- **D-02**: confirming the quantisation level (Q5_1 assumed) against measured
-  size / memory / WER on real audio, including Hinglish
-
-Once those are settled, the `:whisper` module's `cpp/` directory gets the
-whisper.cpp submodule, a `CMakeLists.txt`, and the JNI glue implementing the
-three `external fun`s in `AndroidTranscriptionEngine`.
-
-## Open, permanent decisions
-
-- **D-03**: product name and package identifier. Renamed from "Murmur" to
-  "Vaani" and `com.quietstack.vaani` throughout this codebase after real
-  collision research (Play Store search: "Parrot", "Jot" and "Scribe" all had
-  direct existing competitors in this exact category; "Vaani" and "Awaaz" did
-  not). Still worth a final check before publishing, since the applicationId
-  becomes permanent on first Play upload.
+Kotlin Multiplatform, Jetpack Compose (Material 3), Koin DI, SQLDelight,
+Coroutines/Flow, Media3 (ExoPlayer + MediaSession) for playback, and
+whisper.cpp via JNI/NDK for on-device transcription.
