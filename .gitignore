@@ -15,6 +15,12 @@ captures/
 *.hprof
 *.log
 
+# Release signing key must never be committed — the real one lives outside
+# this repo entirely (see local.properties' VAANI_UPLOAD_STORE_FILE comment);
+# this is defense-in-depth against ever placing one inside the repo by mistake.
+*.jks
+*.keystore
+
 # Downloaded model weights are large and machine-specific, never commit them
 *.bin
 *.gguf

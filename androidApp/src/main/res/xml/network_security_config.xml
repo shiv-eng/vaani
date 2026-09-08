@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Explicit belt-and-suspenders: targetSdk 28+ already defaults cleartextTrafficPermitted
+  to false, but this makes it an explicit, auditable policy rather than relying on
+  a platform default that could change. The app's only network calls are model
+  downloads from huggingface.co (see ModelCatalogue.kt) over HTTPS — no cleartext
+  traffic is ever needed.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

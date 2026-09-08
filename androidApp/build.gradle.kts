@@ -1,19 +1,31 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.composeCompiler)
 }
 
+// Release signing reads from local.properties first (gitignored — see that
+// file's own comment for where the real keystore/credentials live), falling
+// back to environment variables of the same name for CI, where there's no
+// local.properties at all. Never hardcoded, per the launch checklist.
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun signingProp(key: String): String? = localProps.getProperty(key) ?: System.getenv(key)
+
 android {
     namespace = "com.quietstack.vaani"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.quietstack.vaani" // placeholder — see PRD decision D-03, permanent once published
         minSdk = 26
-        targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        targetSdk = 36
+        versionCode = 3
+        versionName = "0.1.2"
     }
 
     buildFeatures {
@@ -29,14 +41,39 @@ android {
         jvmTarget = "17"
     }
 
+    signingConfigs {
+        create("release") {
+            val storeFilePath = signingProp("VAANI_UPLOAD_STORE_FILE")
+            // Only configured when the credentials are actually present, so a
+            // debug-only checkout (no local.properties signing entries, no env
+            // vars) still configures and builds fine — just can't assemble a
+            // signed release.
+            if (storeFilePath != null) {
+                storeFile = file(storeFilePath)
+                storePassword = signingProp("VAANI_UPLOAD_STORE_PASSWORD")
+                keyAlias = signingProp("VAANI_UPLOAD_KEY_ALIAS")
+                keyPassword = signingProp("VAANI_UPLOAD_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
     packaging {
         resources.excludes.add("META-INF/*")
+    }
+
+    bundle {
+        language { enableSplit = true }
+        density { enableSplit = true }
+        abi { enableSplit = true }
     }
 }
 

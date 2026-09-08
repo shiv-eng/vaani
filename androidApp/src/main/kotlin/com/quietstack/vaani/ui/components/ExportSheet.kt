@@ -2,6 +2,8 @@ package com.quietstack.vaani.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,7 +50,7 @@ fun ExportSheetContent(
     onClose: () -> Unit,
 ) {
     val colors = VaaniTheme.colors
-    Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
+    Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp)) {
         Text("Export", style = MaterialTheme.typography.titleMedium, color = colors.ink)
         Spacer(Modifier.height(10.dp))
 

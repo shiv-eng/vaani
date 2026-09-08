@@ -34,7 +34,6 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":whisper"))
             implementation(libs.kotlinx.coroutines.core)
-            implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
             implementation(libs.koin.core)
             implementation(libs.sqldelight.coroutines)
@@ -78,7 +77,7 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
 
 android {
     namespace = "com.quietstack.vaani.shared"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26

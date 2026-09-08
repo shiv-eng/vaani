@@ -53,7 +53,7 @@ kotlin {
 
 android {
     namespace = "com.quietstack.vaani.whisper"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = "27.2.12479018"
 
     defaultConfig {

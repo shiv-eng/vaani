@@ -4,6 +4,8 @@ import android.net.Uri
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,7 +56,18 @@ fun ImportScreen(
     LaunchedEffect(uri) { viewModel.stage(uri) }
     LaunchedEffect(state.savedRecordingId) { state.savedRecordingId?.let(onFinished) }
 
-    Column(modifier = Modifier.fillMaxSize().background(colors.bg).padding(horizontal = 20.dp, vertical = 22.dp).mrise()) {
+    // verticalScroll (not just fillMaxSize) so the import buttons at the
+    // bottom can't be pushed off-screen and left unreachable on a short
+    // screen — the exact bug an onboarding screen hit with this same
+    // fillMaxSize-Column-plus-weight(1f)-spacer pattern.
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .background(colors.bg)
+            .padding(horizontal = 20.dp, vertical = 22.dp)
+            .mrise(),
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(
                 modifier = Modifier
@@ -113,7 +126,7 @@ fun ImportScreen(
                     )
                 }
 
-                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.height(24.dp))
 
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Box(

@@ -3,6 +3,8 @@ package com.quietstack.vaani.ui.onboarding
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -97,8 +99,17 @@ private fun WelcomeStep(onSetUpClick: () -> Unit) {
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 26.dp, vertical = 34.dp).mrise()) {
             WordmarkLockup()
 
-            Spacer(Modifier.weight(1f))
-
+            // Bottom-anchored on a tall screen (matches the old fixed-weight
+            // spacer look), but scrollable — a real device report found the
+            // "Set up on this phone" button pushed off-screen with no way to
+            // reach it, on a screen short enough that the wordmark, headline,
+            // subtitle and four feature rows didn't fit above a fixed-height,
+            // non-scrolling Column. Content that can outgrow its container
+            // has to be able to scroll; this one couldn't.
+            Column(
+                modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.Bottom,
+            ) {
             Text(
                 "Two hours of audio.",
                 color = colors.ink,
@@ -153,6 +164,7 @@ private fun WelcomeStep(onSetUpClick: () -> Unit) {
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
+            }
         }
     }
 }
@@ -199,7 +211,13 @@ private fun DownloadStep(
     val totalSize = formatBytes(model.sizeBytes)
     val downloadedSize = formatBytes((model.sizeBytes * state.progress).toLong())
 
-    Column(modifier = Modifier.fillMaxSize().padding(horizontal = 26.dp, vertical = 34.dp).mrise()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 26.dp, vertical = 34.dp)
+            .mrise(),
+    ) {
         Text(
             "STEP 2 OF 2",
             color = colors.ink3,
@@ -341,7 +359,7 @@ private fun DownloadStep(
             )
         }
 
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.height(24.dp))
         Text(
             "Until this finishes, the app is honest about it: nothing here claims to work offline yet.",
             color = colors.ink3,
