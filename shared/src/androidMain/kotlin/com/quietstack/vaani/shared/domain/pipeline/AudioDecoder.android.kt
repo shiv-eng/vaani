@@ -3,6 +3,7 @@ package com.quietstack.vaani.shared.domain.pipeline
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
+import android.util.Log
 import java.io.ByteArrayOutputStream
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +28,7 @@ internal class AndroidAudioDecoder : AudioDecoder {
     override suspend fun decodeWindow(filePath: String, window: AudioWindow): FloatArray =
         withContext(Dispatchers.Default) {
             val extractor = MediaExtractor()
+            val startedAt = System.currentTimeMillis()
             try {
                 extractor.setDataSource(filePath)
                 val trackIndex = selectAudioTrack(extractor)
@@ -41,9 +43,13 @@ internal class AndroidAudioDecoder : AudioDecoder {
                 extractor.seekTo(window.startMs * 1_000L, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
 
                 val result = decodeToRawPcm(extractor, format, mime, window, sourceSampleRate, channelCount)
+                val codecDoneAt = System.currentTimeMillis()
                 val mono = toMonoFloat(result.pcm, channelCount)
                 val trimmed = trimToWindow(mono, sourceSampleRate, window, result.firstPresentationUs)
-                resampleLinear(trimmed, sourceSampleRate, TARGET_SAMPLE_RATE)
+                val out = resampleLinear(trimmed, sourceSampleRate, TARGET_SAMPLE_RATE)
+                val now = System.currentTimeMillis()
+                Log.i("AndroidAudioDecoder", "window ${window.index}: codec ${codecDoneAt - startedAt}ms, mono+resample ${now - codecDoneAt}ms (${sourceSampleRate}Hz x$channelCount)")
+                out
             } finally {
                 extractor.release()
             }

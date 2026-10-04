@@ -49,6 +49,7 @@ import com.quietstack.vaani.ui.components.Waveform
 import com.quietstack.vaani.ui.components.kind
 import com.quietstack.vaani.ui.components.mrise
 import com.quietstack.vaani.ui.components.mslide
+import com.quietstack.vaani.ui.components.rememberAnimateOnce
 import com.quietstack.vaani.ui.format.formatBytes
 import com.quietstack.vaani.ui.format.formatDurationShort
 import com.quietstack.vaani.ui.theme.JetBrainsMonoFamily
@@ -69,6 +70,7 @@ fun LibraryScreen(
     var actionsFor by remember { mutableStateOf<Recording?>(null) }
     var renaming by remember { mutableStateOf<Recording?>(null) }
     var deleting by remember { mutableStateOf<Recording?>(null) }
+    val animatedRows = remember { mutableSetOf<Any>() }
 
     Column(modifier = Modifier.fillMaxSize().background(colors.bg).mrise()) {
         Row(
@@ -134,11 +136,12 @@ fun LibraryScreen(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
             ) {
                 itemsIndexed(state.shown, key = { _, r -> r.id }) { index, recording ->
+                    val animate = rememberAnimateOnce(recording.id, animatedRows)
                     LibraryItemCard(
                         recording = recording,
                         onClick = { onOpenRecording(recording.id) },
                         onLongClick = { actionsFor = recording },
-                        modifier = Modifier.mslide(index * 40).padding(bottom = 10.dp),
+                        modifier = Modifier.mslide(index * 40, animate = animate).padding(bottom = 10.dp),
                     )
                 }
             }

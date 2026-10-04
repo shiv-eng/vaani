@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.quietstack.vaani.ui.components.mrise
 import com.quietstack.vaani.ui.components.mslide
+import com.quietstack.vaani.ui.components.rememberAnimateOnce
 import com.quietstack.vaani.ui.format.formatMmSs
 import com.quietstack.vaani.ui.theme.JetBrainsMonoFamily
 import com.quietstack.vaani.ui.theme.VaaniTheme
@@ -47,6 +49,7 @@ fun EditScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val colors = VaaniTheme.colors
+    val animatedRows = remember { mutableSetOf<Any>() }
 
     LaunchedEffect(state.saved) { if (state.saved) onSaved() }
 
@@ -95,10 +98,11 @@ fun EditScreen(
             }
 
             itemsIndexed(state.segments, key = { _, es -> es.segment.id }) { index, es ->
+                val animate = rememberAnimateOnce(es.segment.id, animatedRows)
                 EditSegmentRow(
                     state = es,
                     onTextChange = { text -> viewModel.updateDraft(es.segment.id, text) },
-                    modifier = Modifier.mslide(index * 40).padding(bottom = 16.dp),
+                    modifier = Modifier.mslide(index * 40, animate = animate).padding(bottom = 16.dp),
                 )
             }
         }

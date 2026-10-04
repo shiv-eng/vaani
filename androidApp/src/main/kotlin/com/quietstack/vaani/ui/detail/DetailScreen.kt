@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.quietstack.vaani.export.TranscriptExporter
+import com.quietstack.vaani.shared.data.ModelCatalogue
 import com.quietstack.vaani.shared.domain.model.Bookmark
 import com.quietstack.vaani.shared.domain.model.Recording
 import com.quietstack.vaani.shared.domain.model.RecordingSource
@@ -84,6 +85,7 @@ import com.quietstack.vaani.ui.components.RenameDialog
 import com.quietstack.vaani.ui.components.SpinnerRing
 import com.quietstack.vaani.ui.components.mrise
 import com.quietstack.vaani.ui.components.mslide
+import com.quietstack.vaani.ui.components.rememberAnimateOnce
 import com.quietstack.vaani.ui.components.rememberElapsedSeconds
 import com.quietstack.vaani.shared.domain.usecase.LOADING_MODEL_SENTINEL
 import com.quietstack.vaani.ui.format.formatBytes
@@ -114,6 +116,7 @@ fun DetailScreen(
     var deleting by remember { mutableStateOf(false) }
     var showExport by remember { mutableStateOf(false) }
     var showLanguagePicker by remember { mutableStateOf(false) }
+    val animatedRows = remember { mutableSetOf<Any>() }
 
     LaunchedEffect(state.deleted) { if (state.deleted) onBack() }
 
@@ -246,7 +249,7 @@ fun DetailScreen(
                 state.segments.isEmpty() -> {
                     item {
                         EmptyTranscriptCard(
-                            hasModel = state.models.isNotEmpty(),
+                            hasModel = state.models.any { it.id == ModelCatalogue.DEFAULT.id },
                             language = state.language,
                             onLanguageClick = { showLanguagePicker = true },
                             onTranscribeClick = viewModel::startTranscription,
@@ -272,11 +275,12 @@ fun DetailScreen(
                 }
                 else -> {
                     itemsIndexed(state.segments, key = { _, s -> s.id }) { index, segment ->
+                        val animate = rememberAnimateOnce(segment.id, animatedRows)
                         SegmentRow(
                             segment = segment,
                             active = index == state.activeSegmentIndex,
                             onClick = { viewModel.seekTo(segment.startMs) },
-                            modifier = Modifier.mslide(index * 40),
+                            modifier = Modifier.mslide(index * 40, animate = animate),
                         )
                     }
                 }

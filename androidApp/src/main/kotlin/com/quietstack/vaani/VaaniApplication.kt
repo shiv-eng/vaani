@@ -3,6 +3,7 @@ package com.quietstack.vaani
 import android.app.Application
 import com.quietstack.vaani.di.appModule
 import com.quietstack.vaani.recording.CleanupOrphanedRecordingsUseCase
+import com.quietstack.vaani.shared.data.ModelCatalogue
 import com.quietstack.vaani.shared.di.platformModule
 import com.quietstack.vaani.shared.di.sharedModule
 import com.quietstack.vaani.shared.domain.repository.ModelRepository
@@ -29,7 +30,12 @@ class VaaniApplication : Application() {
 
         startKoin {
             androidContext(this@VaaniApplication)
-            modules(appModule, sharedModule, platformModule(), whisperModule)
+            // platformModule() loads after whisperModule deliberately: both
+            // declare a single<TranscriptionEngine>, and this Koin version
+            // resolves same-type duplicates by last-module-wins rather than
+            // an explicit override flag — see SharedModule.android.kt's own
+            // TranscriptionEngine binding for why Android needs to win.
+            modules(appModule, sharedModule, whisperModule, platformModule())
         }
 
         // A recording row (and its job) is created the instant recording
@@ -49,7 +55,16 @@ class VaaniApplication : Application() {
         // the user finishes recording and taps Transcribe, instead of paying
         // that cost after they've asked for a result.
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
-            val model = modelRepository.observeDownloaded().first().firstOrNull() ?: return@launch
+            // Not "whichever model happens to be downloaded" — since
+            // onboarding now also downloads IndicConformer's Hindi model and
+            // tokens file, "first downloaded" could just as easily be one of
+            // those, silently failing this preload every time (wrong file,
+            // not a whisper.cpp .bin) and quietly undoing the whole point of
+            // warming the engine here — every job then pays a real, cold
+            // model load instead of finding one already warm. DEFAULT is the
+            // one real selectable Whisper model this ever preloads; Hindi
+            // loads lazily inside RoutingTranscriptionEngine on first use.
+            val model = modelRepository.observeDownloaded().first().firstOrNull { it.id == ModelCatalogue.DEFAULT.id } ?: return@launch
             val modelPath = File(filesDir, "models/${model.fileName}").absolutePath
             transcriptionEngine.loadModel(modelPath)
         }

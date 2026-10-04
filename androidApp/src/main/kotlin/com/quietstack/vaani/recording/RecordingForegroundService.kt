@@ -16,6 +16,7 @@ import androidx.core.app.NotificationCompat
 import com.quietstack.vaani.MainActivity
 import com.quietstack.vaani.service.TranscriptionForegroundService
 import com.quietstack.vaani.shared.data.AppSettings
+import com.quietstack.vaani.shared.data.ModelCatalogue
 import com.quietstack.vaani.shared.domain.repository.ModelRepository
 import com.quietstack.vaani.shared.domain.usecase.BeginRecordingUseCase
 import com.quietstack.vaani.shared.domain.usecase.FinalizeRecordingUseCase
@@ -155,7 +156,15 @@ class RecordingForegroundService : Service() {
      * same as it always has for imports.
      */
     private suspend fun startTranscriptionIfPossible(recordingId: String) {
-        val model = modelRepository.observeDownloaded().first().firstOrNull() ?: return
+        // Not just "whichever model was downloaded most recently" — since
+        // onboarding started downloading IndicConformer's Hindi model and
+        // tokens file alongside the Whisper one, that query can return
+        // either of those instead of the actual transcription model,
+        // sending whisper.cpp a tokens.txt path as if it were a .bin file.
+        // DEFAULT is the one real selectable model this pipeline ever
+        // passes to loadModel() — Hindi routing happens inside
+        // RoutingTranscriptionEngine based on language, invisibly to this.
+        val model = modelRepository.observeDownloaded().first().firstOrNull { it.id == ModelCatalogue.DEFAULT.id } ?: return
         if (PreflightCheck.run(applicationContext, model.sizeBytes) != PreflightCheck.Result.Ok) return
         val language = appSettings.transcriptionLanguage
         TranscriptionForegroundService.start(applicationContext, recordingId, model.id, language)

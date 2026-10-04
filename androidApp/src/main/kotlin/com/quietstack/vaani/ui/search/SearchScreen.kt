@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
@@ -36,6 +37,7 @@ import com.quietstack.vaani.ui.components.Waveform
 import com.quietstack.vaani.ui.components.kind
 import com.quietstack.vaani.ui.components.mrise
 import com.quietstack.vaani.ui.components.mslide
+import com.quietstack.vaani.ui.components.rememberAnimateOnce
 import com.quietstack.vaani.ui.format.formatBytes
 import com.quietstack.vaani.ui.format.formatDurationShort
 import com.quietstack.vaani.ui.theme.JetBrainsMonoFamily
@@ -49,6 +51,7 @@ fun SearchScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val colors = VaaniTheme.colors
+    val animatedRows = remember { mutableSetOf<Any>() }
 
     Column(modifier = Modifier.fillMaxSize().background(colors.bg).mrise()) {
         Text(
@@ -105,10 +108,11 @@ fun SearchScreen(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
             ) {
                 itemsIndexed(state.results, key = { _, r -> r.id }) { index, recording ->
+                    val animate = rememberAnimateOnce(recording.id, animatedRows)
                     SearchResultCard(
                         recording = recording,
                         onClick = { onOpenRecording(recording.id) },
-                        modifier = Modifier.mslide(index * 40).padding(bottom = 10.dp),
+                        modifier = Modifier.mslide(index * 40, animate = animate).padding(bottom = 10.dp),
                     )
                 }
             }

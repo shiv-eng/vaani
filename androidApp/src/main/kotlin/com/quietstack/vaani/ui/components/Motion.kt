@@ -49,19 +49,40 @@ fun Modifier.mrise(durationMillis: Int = 450, translateY: Dp = 15.dp): Modifier 
 /**
  * `mslide` (list/card stagger, README "Motion"): opacity 0→1, translateY
  * 22dp→0, 400–550ms, with a per-item stagger delay.
+ *
+ * [animate] must be false for a row that has already played this once —
+ * LazyColumn disposes and recomposes item slots that scroll far enough out
+ * of view, which re-runs `remember { Animatable(0f) }` and `LaunchedEffect`
+ * from scratch. Left at its old always-true default, every row silently
+ * replayed its fade/slide-in each time it scrolled back into view, which is
+ * exactly what "janky scrolling" looks like — see rememberAnimateOnce, which
+ * callers use to compute this per item key.
  */
-fun Modifier.mslide(delayMillis: Int, durationMillis: Int = 480, translateY: Dp = 22.dp): Modifier = composed {
+fun Modifier.mslide(delayMillis: Int, durationMillis: Int = 480, translateY: Dp = 22.dp, animate: Boolean = true): Modifier = composed {
     val density = LocalDensity.current
-    val progress = remember { Animatable(0f) }
-    LaunchedEffect(Unit) {
-        delay(delayMillis.toLong())
-        progress.animateTo(1f, tween(durationMillis, easing = VaaniEasing))
+    val progress = remember { Animatable(if (animate) 0f else 1f) }
+    LaunchedEffect(animate) {
+        if (animate) {
+            delay(delayMillis.toLong())
+            progress.animateTo(1f, tween(durationMillis, easing = VaaniEasing))
+        }
     }
     graphicsLayer {
         alpha = progress.value
         translationY = with(density) { translateY.toPx() } * (1f - progress.value)
     }
 }
+
+/**
+ * Returns true the first time it's called for a given [key] during this
+ * screen's lifetime, false every time after — including after the caller's
+ * own composition was disposed and recreated (a LazyColumn row scrolled out
+ * then back). [seen] must be hoisted above the list (e.g. the screen's
+ * top-level `remember`), not created inside the item lambda, or it gets
+ * disposed along with the row and defeats the whole point.
+ */
+@Composable
+fun rememberAnimateOnce(key: Any, seen: MutableSet<Any>): Boolean = remember(key) { seen.add(key) }
 
 /**
  * A plain ticking second-count while [active] is true, reset to 0 each time

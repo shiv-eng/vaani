@@ -29,6 +29,15 @@ kotlin {
             implementation(libs.koin.core)
         }
 
+        // sherpa-onnx has no Maven/JitPack artifact — this AAR is downloaded
+        // from its GitHub release and committed to libs/ (unlike the *.bin
+        // model weights, this is compiled code the build needs, not a large
+        // data file fetched at runtime). See libs/README.md for the exact
+        // release, URL and sha256 this came from.
+        androidMain.dependencies {
+            implementation("com.k2fsa:sherpa-onnx:1.13.8@aar")
+        }
+
         // Spike-only: exercises the JNI boundary directly on a device/emulator,
         // bypassing AudioDecoder/recording (still stubs) with a bundled WAV file.
         // Not part of the app or meant to stay long-term — see PRD section 14.

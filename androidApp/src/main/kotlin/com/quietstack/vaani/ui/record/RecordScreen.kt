@@ -132,17 +132,12 @@ fun RecordScreen(
                 ) {
                     Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back", tint = colors.ink2, modifier = Modifier.size(16.dp))
                 }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
-                        .background(colors.surf, RoundedCornerShape(999.dp))
-                        .clickable { showLanguagePicker = true }
-                        .padding(horizontal = 13.dp, vertical = 7.dp),
-                ) {
-                    Text(labelForLanguageCode(language), color = colors.ink2, fontSize = 11.5.sp)
-                    Text("▾", color = colors.pri, fontSize = 11.5.sp)
-                }
+                LanguageQuickToggle(
+                    language = language,
+                    onSelectEnglish = { viewModel.setLanguage("en") },
+                    onSelectHindi = { viewModel.setLanguage("hi") },
+                    onOpenMore = { showLanguagePicker = true },
+                )
             }
 
             Column(
@@ -259,6 +254,84 @@ fun RecordScreen(
             )
         }
     }
+}
+
+/**
+ * Recording starts the instant this screen opens (see the LaunchedEffect
+ * above) — there's no separate "pick a language, then record" step, so this
+ * has to be noticed and used in the few seconds before the user starts
+ * talking. The previous version was a small "English ▾" pill tucked next to
+ * the back button; real-device testing showed users never touching it,
+ * speaking Hindi under the English default, and getting an English
+ * *translation* back instead of a Hindi transcript — Whisper's documented
+ * behavior when forced to a language token that doesn't match the speech.
+ * English and Hindi are the two languages this app is actually tuned for
+ * (see WHISPER_LANGUAGES), so they get a direct, always-visible two-way
+ * toggle instead of being buried in the picker sheet; anything else still
+ * goes through [onOpenMore].
+ */
+@Composable
+private fun LanguageQuickToggle(
+    language: String?,
+    onSelectEnglish: () -> Unit,
+    onSelectHindi: () -> Unit,
+    onOpenMore: () -> Unit,
+) {
+    val colors = VaaniTheme.colors
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .background(colors.surf, RoundedCornerShape(999.dp))
+                .padding(3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            LanguageSegment(label = "English", selected = language == "en", onClick = onSelectEnglish)
+            LanguageSegment(label = "हिंदी", selected = language == "hi", onClick = onSelectHindi)
+        }
+        if (language != "en" && language != "hi") {
+            // Auto-detect or one of the other ~90 languages — neither segment
+            // above applies, so say what's actually selected rather than
+            // silently showing nothing active.
+            Text(
+                labelForLanguageCode(language),
+                color = colors.pri,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .background(colors.priDim, RoundedCornerShape(999.dp))
+                    .clickable(onClick = onOpenMore)
+                    .padding(horizontal = 10.dp, vertical = 7.dp),
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .background(colors.surf, RoundedCornerShape(999.dp))
+                    .clickable(onClick = onOpenMore),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text("⋯", color = colors.ink3, fontSize = 13.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun LanguageSegment(label: String, selected: Boolean, onClick: () -> Unit) {
+    val colors = VaaniTheme.colors
+    Text(
+        label,
+        color = if (selected) colors.bg else colors.ink2,
+        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+        fontSize = 12.5.sp,
+        modifier = Modifier
+            .background(if (selected) colors.pri else Color.Transparent, RoundedCornerShape(999.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 13.dp, vertical = 7.dp),
+    )
 }
 
 @Composable

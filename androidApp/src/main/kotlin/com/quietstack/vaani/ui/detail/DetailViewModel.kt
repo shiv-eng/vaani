@@ -20,6 +20,7 @@ import com.quietstack.vaani.shared.domain.model.Segment
 import com.quietstack.vaani.shared.domain.model.TranscriptionJob
 import com.quietstack.vaani.shared.domain.model.TranscriptionModel
 import com.quietstack.vaani.shared.data.AppSettings
+import com.quietstack.vaani.shared.data.ModelCatalogue
 import com.quietstack.vaani.shared.domain.pipeline.TranscriptionProgressTracker
 import com.quietstack.vaani.shared.domain.repository.BookmarkRepository
 import com.quietstack.vaani.shared.domain.repository.ModelRepository
@@ -226,7 +227,10 @@ class DetailViewModel(
     }
 
     fun startTranscription() {
-        val model = _state.value.models.firstOrNull() ?: return
+        // See RecordingForegroundService's identical fix: "first downloaded
+        // model" now also matches IndicConformer's Hindi model/tokens files,
+        // which aren't a selectable transcription model at all.
+        val model = _state.value.models.firstOrNull { it.id == ModelCatalogue.DEFAULT.id } ?: return
         when (val result = PreflightCheck.run(context, model.sizeBytes)) {
             is PreflightCheck.Result.Ok ->
                 TranscriptionForegroundService.start(context, recordingId, model.id, language = _state.value.language)

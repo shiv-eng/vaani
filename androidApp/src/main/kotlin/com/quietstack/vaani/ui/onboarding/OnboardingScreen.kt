@@ -1,8 +1,11 @@
 package com.quietstack.vaani.ui.onboarding
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -37,8 +41,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import com.quietstack.vaani.shared.data.ModelCatalogue
 import com.quietstack.vaani.ui.components.WordmarkLockup
 import com.quietstack.vaani.ui.components.mrise
@@ -73,6 +79,7 @@ fun OnboardingScreen(
                 onWaitForWifiChange = viewModel::setWaitForWifi,
                 onRetry = viewModel::retry,
             )
+            OnboardingStep.WALKTHROUGH -> WalkthroughStep(onFinish = viewModel::onWalkthroughFinished)
         }
     }
 }
@@ -143,7 +150,7 @@ private fun WelcomeStep(onSetUpClick: () -> Unit) {
             Spacer(Modifier.height(10.dp))
             FeatureRow("∞", "Free, without a meter", "There is no server to pay for", delayMillis = 130)
             Spacer(Modifier.height(10.dp))
-            FeatureRow(null, "English, fast and accurate", "Other languages are supported too — Hindi accuracy is still a work in progress", delayMillis = 210)
+            FeatureRow(null, "English and Hindi, built for accuracy", "Hindi runs on a dedicated speech model instead of a general one, since a general model kept confusing it for Urdu. Other languages are supported too, just not tuned like these two.", delayMillis = 210)
 
             Spacer(Modifier.height(24.dp))
             Box(
@@ -158,7 +165,7 @@ private fun WelcomeStep(onSetUpClick: () -> Unit) {
             }
             Spacer(Modifier.height(10.dp))
             Text(
-                "One ${formatBytes(ModelCatalogue.DEFAULT.sizeBytes)} model download first. Offline after that.",
+                "One ${formatBytes(ModelCatalogue.REQUIRED.sumOf { it.sizeBytes })} download first (speech models for English and Hindi). Offline after that.",
                 color = colors.ink3,
                 fontSize = 11.5.sp,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -207,9 +214,9 @@ private fun DownloadStep(
     onRetry: () -> Unit,
 ) {
     val colors = VaaniTheme.colors
-    val model = ModelCatalogue.DEFAULT
-    val totalSize = formatBytes(model.sizeBytes)
-    val downloadedSize = formatBytes((model.sizeBytes * state.progress).toLong())
+    val totalBytes = ModelCatalogue.REQUIRED.sumOf { it.sizeBytes }
+    val totalSize = formatBytes(totalBytes)
+    val downloadedSize = formatBytes((totalBytes * state.progress).toLong())
 
     Column(
         modifier = Modifier
@@ -291,7 +298,7 @@ private fun DownloadStep(
             }
             Spacer(Modifier.height(14.dp))
             Text(
-                "Speech model · English (plus other languages)",
+                "Speech models · English and Hindi (plus other languages)",
                 color = colors.ink,
                 fontFamily = ManropeFamily,
                 fontWeight = FontWeight.SemiBold,
@@ -366,5 +373,134 @@ private fun DownloadStep(
             fontSize = 11.5.sp,
             lineHeight = 16.sp,
         )
+    }
+}
+
+private data class WalkthroughPage(val glyph: String, val title: String, val body: String)
+
+private val walkthroughPages = listOf(
+    WalkthroughPage(
+        "●",
+        "Record anywhere",
+        "Tap record and go. It keeps capturing even if you lock the phone or switch to another app.",
+    ),
+    WalkthroughPage(
+        "✎",
+        "Transcribed automatically",
+        "No extra tap needed. English and Hindi each run on their own tuned speech model, entirely on this phone.",
+    ),
+    WalkthroughPage(
+        "🔖",
+        "Find anything again",
+        "Bookmark a moment, fix a word by hand, or search across every recording you've made.",
+    ),
+    WalkthroughPage(
+        "⌁",
+        "Nothing leaves your phone",
+        "No account, no cloud. Export any recording as audio, text, or subtitles whenever you want.",
+    ),
+)
+
+/**
+ * The real end of onboarding (README "Get started"): a few swipeable pages
+ * covering what the app actually does day to day, shown once — after the
+ * models are ready — regardless of whether the user waited for the full
+ * download or skipped ahead to a background one. "Skip" and the final
+ * button both call the same [onFinish]; this screen is a tour, not a gate.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun WalkthroughStep(onFinish: () -> Unit) {
+    val colors = VaaniTheme.colors
+    val pagerState = rememberPagerState(pageCount = { walkthroughPages.size })
+    val scope = rememberCoroutineScope()
+    val isLastPage = pagerState.currentPage == walkthroughPages.lastIndex
+
+    Column(modifier = Modifier.fillMaxSize().padding(horizontal = 26.dp, vertical = 34.dp).mrise()) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            Text(
+                "Skip",
+                color = colors.ink3,
+                fontFamily = ManropeFamily,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                modifier = Modifier.clickable(onClick = onFinish).padding(8.dp),
+            )
+        }
+
+        HorizontalPager(state = pagerState, modifier = Modifier.weight(1f).fillMaxWidth()) { page ->
+            val item = walkthroughPages[page]
+            Column(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Box(
+                    modifier = Modifier.size(84.dp).background(colors.priDim, RoundedCornerShape(28.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(item.glyph, color = colors.pri, fontSize = 30.sp, fontWeight = FontWeight.Medium)
+                }
+                Spacer(Modifier.height(28.dp))
+                Text(
+                    item.title,
+                    color = colors.ink,
+                    fontFamily = SoraFamily,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 23.sp,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    item.body,
+                    color = colors.ink2,
+                    fontFamily = ManropeFamily,
+                    fontSize = 14.5.sp,
+                    lineHeight = 21.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.widthIn(max = 300.dp),
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            walkthroughPages.indices.forEach { i ->
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
+                        .size(if (i == pagerState.currentPage) 20.dp else 6.dp, 6.dp)
+                        .background(
+                            if (i == pagerState.currentPage) colors.pri else colors.line,
+                            RoundedCornerShape(3.dp),
+                        ),
+                )
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .background(colors.pri, RoundedCornerShape(18.dp))
+                .clickable(onClick = {
+                    if (isLastPage) {
+                        onFinish()
+                    } else {
+                        scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
+                    }
+                }),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                if (isLastPage) "Start using Vaani" else "Next",
+                color = colors.priOn,
+                fontFamily = ManropeFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+            )
+        }
     }
 }

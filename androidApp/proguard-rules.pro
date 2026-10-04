@@ -53,3 +53,13 @@
 # SQLDelight, Koin, Media3 and WorkManager all ship their own consumer
 # ProGuard rules inside their AARs (merged automatically) — nothing
 # additional needed here for them.
+
+# sherpa-onnx's own AAR ships an EMPTY proguard.txt (checked directly —
+# whisper/libs/README.md has the exact file) despite its Kotlin config/result
+# classes (OfflineRecognizerConfig, OfflineModelConfig, OfflineNemoEncDecCtcModelConfig,
+# OfflineRecognizerResult, etc.) being read by its native C++ side via JNI
+# field/method reflection — the same failure mode whisper_jni.cpp has above,
+# just with no upstream keep rules to lean on. Keeping the whole package
+# rather than individual classes since there's no C++ source here (unlike
+# whisper.cpp) to confirm the exact reflected set.
+-keep class com.k2fsa.sherpa.onnx.** { *; }

@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.quietstack.vaani.ui.components.WordmarkLockup
 import com.quietstack.vaani.ui.components.mrise
 import com.quietstack.vaani.ui.components.mslide
+import com.quietstack.vaani.ui.components.rememberAnimateOnce
 import com.quietstack.vaani.ui.theme.VaaniTheme
 
 private data class AboutPoint(val title: String, val body: String)
@@ -54,6 +56,7 @@ private val points = listOf(
 @Composable
 fun AboutScreen() {
     val colors = VaaniTheme.colors
+    val animatedRows = remember { mutableSetOf<Any>() }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(colors.bg).padding(horizontal = 20.dp).mrise(),
@@ -70,8 +73,9 @@ fun AboutScreen() {
             Spacer(Modifier.height(28.dp))
         }
 
-        itemsIndexed(points) { index, point ->
-            AboutCard(point, modifier = Modifier.mslide(index * 60))
+        itemsIndexed(points, key = { index, _ -> index }) { index, point ->
+            val animate = rememberAnimateOnce(index, animatedRows)
+            AboutCard(point, modifier = Modifier.mslide(index * 60, animate = animate))
             Spacer(Modifier.height(12.dp))
         }
 

@@ -35,21 +35,22 @@ data class LanguageOption(val code: String?, val label: String)
 
 /**
  * The exact set whisper.cpp supports (src/whisper.cpp's g_lang table) — not a
- * curated subset. English is pinned first since it's the default (see
- * AppSettings.transcriptionLanguage) and the language this app is actually
- * verified to work well for; Auto-detect and Hindi are pinned right after —
- * Hindi is one of the most-requested languages here but real on-device
- * testing found it genuinely unreliable (rendered in Urdu's script, and
- * Hindi/English code-switching collapsing to English-only), which is why its
- * label says so rather than presenting it as equally supported. The rest
- * follow whisper's own list order rather than being re-alphabetized, so it
- * stays a direct mirror of what the engine actually supports — most of them
- * simply haven't been tested on real speech the way English and Hindi have.
+ * curated subset, plus Hindi routed to a dedicated model (see
+ * RoutingTranscriptionEngine in the `:whisper` module) rather than Whisper's
+ * own general multilingual decoding, which real on-device testing found
+ * genuinely unreliable for Hindi (rendered in Urdu's script, Hindi/English
+ * code-switching collapsing to English-only). English is pinned first since
+ * it's the default (see AppSettings.transcriptionLanguage); Auto-detect and
+ * Hindi are pinned right after since they're the two languages this app is
+ * actually verified to work well for. The rest follow whisper's own list
+ * order rather than being re-alphabetized, so it stays a direct mirror of
+ * what the engine actually supports — most of them simply haven't been
+ * tested on real speech the way English and Hindi have.
  */
 val WHISPER_LANGUAGES: List<LanguageOption> = listOf(
     LanguageOption("en", "English"),
     LanguageOption(null, "Auto-detect"),
-    LanguageOption("hi", "Hindi (accuracy still limited)"),
+    LanguageOption("hi", "Hindi"),
     LanguageOption("zh", "Chinese"),
     LanguageOption("de", "German"),
     LanguageOption("es", "Spanish"),
@@ -176,7 +177,7 @@ fun LanguagePickerContent(selected: String?, onSelect: (String?) -> Unit) {
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp),
             )
             Text(
-                "English works best right now. Other languages are supported but not all tested — Hindi in particular can still come out wrong.",
+                "English and Hindi are both tuned for accuracy. Other languages are supported but not all tested the same way.",
                 color = colors.ink3,
                 fontSize = 12.5.sp,
                 lineHeight = 17.sp,

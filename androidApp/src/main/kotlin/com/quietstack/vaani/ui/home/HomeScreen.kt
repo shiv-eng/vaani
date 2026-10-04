@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -43,6 +44,7 @@ import com.quietstack.vaani.ui.components.SpinnerRing
 import com.quietstack.vaani.ui.components.kind
 import com.quietstack.vaani.ui.components.mrise
 import com.quietstack.vaani.ui.components.mslide
+import com.quietstack.vaani.ui.components.rememberAnimateOnce
 import com.quietstack.vaani.ui.components.rememberBlinkAlpha
 import com.quietstack.vaani.ui.components.rememberElapsedSeconds
 import com.quietstack.vaani.ui.components.WordmarkBars
@@ -63,6 +65,7 @@ fun HomeScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val colors = VaaniTheme.colors
+    val animatedRows = remember { mutableSetOf<Any>() }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(colors.bg).padding(horizontal = 20.dp).mrise(),
@@ -124,7 +127,8 @@ fun HomeScreen(
             item { EmptyRecentCard(modifier = Modifier.mrise()) }
         } else {
             itemsIndexed(state.recent, key = { _, item -> item.id }) { index, item ->
-                RecentRow(item, onClick = { onOpenRecording(item.id) }, modifier = Modifier.mslide(index * 60))
+                val animate = rememberAnimateOnce(item.id, animatedRows)
+                RecentRow(item, onClick = { onOpenRecording(item.id) }, modifier = Modifier.mslide(index * 60, animate = animate))
                 Spacer(Modifier.height(9.dp))
             }
         }

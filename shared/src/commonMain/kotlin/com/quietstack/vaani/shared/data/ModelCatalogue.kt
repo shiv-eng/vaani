@@ -112,9 +112,65 @@ object ModelCatalogue {
         sha256 = "394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2",
     )
 
+    /**
+     * INT8-quantized ONNX export of AI4Bharat's IndicConformer (Hybrid CTC +
+     * RNNT), used only for Hindi — see [RoutingTranscriptionEngine] in the
+     * `:whisper` module for the actual language-based dispatch. Whisper's
+     * Hindi accuracy was fought over most of this project's life (script
+     * confusion with Urdu, code-switching collapsing to English) without a
+     * real fix; IndicConformer is a model AI4Bharat trained specifically for
+     * Indian languages rather than a multilingual model that merely includes
+     * them, and benchmarks meaningfully better on Hindi WER than even
+     * Whisper large-v3 (~13.8 vs ~23.8), let alone the "small" model this app
+     * actually ships. This conversion covers 8 Indic languages in one file
+     * (Assamese, Bengali, Bodo, Gujarati, Hindi, Kannada, Kashmiri, Marathi)
+     * — only Hindi is wired up for now since that's the language this app
+     * actually had a problem with; routing another of these 8 languages to
+     * it later is a small follow-up, not a new integration.
+     * Chosen over an official-provenance but differently-packaged Hindi-only
+     * export (OpenVoiceOS/ai4bharat-indicconformer-hi-onnx, converted
+     * straight from AI4Bharat's own model) specifically because this one's
+     * own description confirms it was exported for sherpa-onnx — the runtime
+     * this app actually uses — rather than a different library
+     * (`onnx-asr`) whose exported graph shape/conventions aren't guaranteed
+     * to match sherpa-onnx's expectations. Size and sha256 confirmed against
+     * the file actually downloaded from Hugging Face (independently, on a
+     * host machine, not just on-device). Original model MIT-licensed by
+     * AI4Bharat (IIT Madras); this ONNX conversion also published MIT.
+     */
+    val INDIC_CONFORMER_HI_MODEL = ModelCatalogueEntry(
+        id = "indic-conformer-hi-model",
+        name = "indic-conformer",
+        variant = "hi",
+        fileName = "indic-conformer.int8.onnx",
+        url = "https://huggingface.co/meetsync/indic-conformer-onnx-sherpa/resolve/main/model.int8.onnx",
+        sizeBytes = 196_977_855L,
+        sha256 = "b99a01834cd1a72cd9be682a0b9543df6b152ef7dfceba88d3dbf59fbb77075d",
+    )
+
+    /** Token vocabulary for [INDIC_CONFORMER_HI_MODEL] — required alongside it, not optional. */
+    val INDIC_CONFORMER_HI_TOKENS = ModelCatalogueEntry(
+        id = "indic-conformer-hi-tokens",
+        name = "indic-conformer-tokens",
+        variant = "hi",
+        fileName = "indic-conformer-tokens.txt",
+        url = "https://huggingface.co/meetsync/indic-conformer-onnx-sherpa/resolve/main/tokens.txt",
+        sizeBytes = 73_238L,
+        sha256 = "743aeb755c4489bc734a6705578552b072ffb45055aeeb5db19ae7761a424882",
+    )
+
     val DEFAULT = SMALL_Q5_1
 
-    val all: List<ModelCatalogueEntry> = listOf(BASE_Q5_1, SMALL_Q5_1, MEDIUM_Q5_0, LARGE_V3_TURBO_Q5_0)
+    val all: List<ModelCatalogueEntry> =
+        listOf(BASE_Q5_1, SMALL_Q5_1, MEDIUM_Q5_0, LARGE_V3_TURBO_Q5_0, INDIC_CONFORMER_HI_MODEL, INDIC_CONFORMER_HI_TOKENS)
+
+    /**
+     * Everything onboarding downloads upfront, not just [DEFAULT] — the user
+     * explicitly chose to pay for Hindi support during initial setup rather
+     * than deferring it to first Hindi use, so Hindi works immediately with
+     * no second wait later.
+     */
+    val REQUIRED: List<ModelCatalogueEntry> = listOf(DEFAULT, INDIC_CONFORMER_HI_MODEL, INDIC_CONFORMER_HI_TOKENS)
 
     fun byId(id: String): ModelCatalogueEntry? = all.firstOrNull { it.id == id }
 }
