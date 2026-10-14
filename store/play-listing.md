@@ -1,4 +1,4 @@
-# Vaani — Google Play listing (v0.2.0, versionCode 4)
+# Vaani — Google Play listing (v0.2.0, versionCode 5)
 
 Paste each block into Play Console > Grow > Store presence > Main store listing
 (English) and Add translation > Hindi. Limits: title 30, short 80, full 4000.
@@ -130,7 +130,7 @@ Vaani एक वॉइस रिकॉर्डर है जो आपकी �
 - Take Hindi-locale screenshots with the Hindi transcript visible for the hi-IN listing
 
 ## Release checklist
-- [ ] Upload androidApp/build/outputs/bundle/release/androidApp-release.aab (versionCode 4, 0.2.0)
+- [ ] Upload androidApp/build/outputs/bundle/release/androidApp-release.aab (versionCode 5, 0.2.0)
 - [ ] Release notes pasted per language from "What's new"
 - [ ] Declarations: foreground services, Data safety, content rating unchanged or re-confirmed
 - [ ] Smoke test the signed release build on a device before rollout (R8 and the native Hindi engine)
