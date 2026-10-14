@@ -1,5 +1,7 @@
 # Vaani
 
+<a href="https://play.google.com/store/apps/details?id=com.quietstack.vaani"><img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="80"></a>
+
 A voice recorder for Android that also transcribes what you said — entirely
 on the phone, with no account and no cloud. Tap record, and Vaani keeps
 capturing audio in the background even if the screen locks or you switch
@@ -11,8 +13,6 @@ Hindi is transcribed in Devanagari with AI4Bharat's IndicConformer; English
 and other languages use OpenAI's Whisper. Every recording is a real audio
 file first — export it as-is, as plain text, or as an SRT subtitle file,
 whether the transcript came out right or not.
-
-[Get it on Google Play](https://play.google.com/store/apps/details?id=com.quietstack.vaani)
 
 ## Features
 
