@@ -14,6 +14,12 @@ and other languages use OpenAI's Whisper. Every recording is a real audio
 file first — export it as-is, as plain text, or as an SRT subtitle file,
 whether the transcript came out right or not.
 
+<p>
+  <img src="https://play-lh.googleusercontent.com/A5249n6mWYbQe2jl6mU4szV_UL0BCgpDRbBHvtk9ue61bthL6QSIFvGVSnN8Rl6VJ0zbou_-iVRn6Lu0ClGGAQ=h600" alt="Vaani screenshot" height="400">
+  <img src="https://play-lh.googleusercontent.com/TZRtsvav0rYh-PX4nLZeoatKDX6dr2a8Mw-xooC7GmI7eHht55eKrVhjPyOOkE4FJXIPqf0-4mloJLTK4d2rqxk=h600" alt="Vaani screenshot" height="400">
+  <img src="https://play-lh.googleusercontent.com/R8dig_xgQxqwfPu5MN02NA7I9yBWlG2K05maIVZ0BaGPTj90yhufQqPSRGbz9KqKfG1UYQsZ-tPq9qVP8eFTWA=h600" alt="Vaani screenshot" height="400">
+</p>
+
 ## Features
 
 - Record audio of any length, with recording surviving backgrounding/lock
